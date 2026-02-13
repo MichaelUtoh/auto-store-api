@@ -1,0 +1,1837 @@
+basePath: /
+definitions:
+  auto-store-api_internal_handlers_dto.AddCartItemRequest:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  auto-store-api_internal_handlers_dto.AddProductImagesRequest:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.ProductImageItem'
+        minItems: 1
+        type: array
+    required:
+    - images
+    type: object
+  auto-store-api_internal_handlers_dto.AddVehicleCompatibilitiesRequest:
+    properties:
+      compatibilities:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.VehicleCompatibilityItem'
+        minItems: 1
+        type: array
+    required:
+    - compatibilities
+    type: object
+  auto-store-api_internal_handlers_dto.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+    type: object
+  auto-store-api_internal_handlers_dto.BatchProductError:
+    properties:
+      index:
+        type: integer
+      message:
+        type: string
+      sku:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.BatchProductResult:
+    properties:
+      index:
+        type: integer
+      product:
+        $ref: '#/definitions/auto-store-api_internal_models.Product'
+    type: object
+  auto-store-api_internal_handlers_dto.CreateAddressRequest:
+    properties:
+      city:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 100
+        type: string
+      is_default:
+        type: boolean
+      postal_code:
+        maxLength: 20
+        type: string
+      state:
+        maxLength: 100
+        type: string
+      street:
+        maxLength: 255
+        type: string
+      type:
+        enum:
+        - shipping
+        - billing
+        type: string
+    required:
+    - city
+    - country
+    - street
+    - type
+    type: object
+  auto-store-api_internal_handlers_dto.CreateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      parent_id:
+        type: string
+      slug:
+        type: string
+    required:
+    - name
+    type: object
+  auto-store-api_internal_handlers_dto.CreateOrderRequest:
+    properties:
+      billing_address_id:
+        type: string
+      payment_method:
+        maxLength: 50
+        type: string
+      shipping_address_id:
+        type: string
+    required:
+    - billing_address_id
+    - payment_method
+    - shipping_address_id
+    type: object
+  auto-store-api_internal_handlers_dto.CreateProductRequest:
+    properties:
+      brand:
+        maxLength: 100
+        type: string
+      category_ids:
+        items:
+          type: string
+        type: array
+      condition:
+        enum:
+        - new
+        - refurbished
+        - used
+        type: string
+      cost_price:
+        minimum: 0
+        type: number
+      description:
+        type: string
+      dimensions:
+        maxLength: 100
+        type: string
+      manufacturer_part_number:
+        maxLength: 100
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      price:
+        type: number
+      sku:
+        maxLength: 100
+        type: string
+      stock_quantity:
+        minimum: 0
+        type: integer
+      tag_ids:
+        items:
+          type: string
+        type: array
+      warranty_months:
+        minimum: 0
+        type: integer
+      weight:
+        minimum: 0
+        type: number
+    required:
+    - name
+    - price
+    - sku
+    type: object
+  auto-store-api_internal_handlers_dto.CreateProductsBatchRequest:
+    properties:
+      products:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateProductRequest'
+        type: array
+    required:
+    - products
+    type: object
+  auto-store-api_internal_handlers_dto.CreateProductsBatchResponse:
+    properties:
+      created:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.BatchProductResult'
+        type: array
+      failed:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.BatchProductError'
+        type: array
+    type: object
+  auto-store-api_internal_handlers_dto.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  auto-store-api_internal_handlers_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auto-store-api_internal_handlers_dto.ProductImageItem:
+    properties:
+      alt_text:
+        maxLength: 255
+        type: string
+      display_order:
+        type: integer
+      is_primary:
+        type: boolean
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  auto-store-api_internal_handlers_dto.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  auto-store-api_internal_handlers_dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        maxLength: 100
+        type: string
+      last_name:
+        maxLength: 100
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auto-store-api_internal_handlers_dto.ResetPasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateAddressRequest:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      is_default:
+        type: boolean
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateCartItemRequest:
+    properties:
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - quantity
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: string
+      slug:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateOrderStatusRequest:
+    properties:
+      status:
+        enum:
+        - pending
+        - confirmed
+        - processing
+        - shipped
+        - delivered
+        - cancelled
+        type: string
+    required:
+    - status
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateProductRequest:
+    properties:
+      brand:
+        type: string
+      category_ids:
+        items:
+          type: string
+        type: array
+      condition:
+        type: string
+      cost_price:
+        type: number
+      description:
+        type: string
+      dimensions:
+        type: string
+      manufacturer_part_number:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      stock_quantity:
+        type: integer
+      tag_ids:
+        items:
+          type: string
+        type: array
+      warranty_months:
+        type: integer
+      weight:
+        type: number
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateProfileRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateRoleRequest:
+    properties:
+      role:
+        enum:
+        - ADMIN
+        - VENDOR
+        - CUSTOMER
+        type: string
+    required:
+    - role
+    type: object
+  auto-store-api_internal_handlers_dto.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.VehicleCompatibilityItem:
+    properties:
+      engine:
+        maxLength: 100
+        type: string
+      make:
+        maxLength: 100
+        type: string
+      model:
+        maxLength: 100
+        type: string
+      notes:
+        maxLength: 500
+        type: string
+      trim:
+        maxLength: 100
+        type: string
+      year_end:
+        description: 0 = unspecified
+        type: integer
+      year_start:
+        description: 0 = unspecified
+        type: integer
+    required:
+    - make
+    - model
+    type: object
+  auto-store-api_internal_handlers_dto.VerifyEmailRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  auto-store-api_internal_models.Address:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_default:
+        type: boolean
+      postal_code:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+      type:
+        $ref: '#/definitions/auto-store-api_internal_models.AddressType'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  auto-store-api_internal_models.AddressType:
+    enum:
+    - shipping
+    - billing
+    type: string
+    x-enum-varnames:
+    - AddressShipping
+    - AddressBilling
+  auto-store-api_internal_models.Category:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Category'
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      level:
+        type: integer
+      name:
+        type: string
+      parent:
+        $ref: '#/definitions/auto-store-api_internal_models.Category'
+      parent_id:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Product'
+        type: array
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  auto-store-api_internal_models.Product:
+    properties:
+      brand:
+        type: string
+      categories:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Category'
+        type: array
+      compatibilities:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.VehicleCompatibility'
+        type: array
+      condition:
+        $ref: '#/definitions/auto-store-api_internal_models.ProductCondition'
+      cost_price:
+        type: number
+      created_at:
+        type: string
+      description:
+        type: string
+      dimensions:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.ProductImage'
+        type: array
+      manufacturer_part_number:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      reviews:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Review'
+        type: array
+      sku:
+        type: string
+      specifications:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Specification'
+        type: array
+      stock_quantity:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Tag'
+        type: array
+      updated_at:
+        type: string
+      warranty_months:
+        type: integer
+      weight:
+        type: number
+    type: object
+  auto-store-api_internal_models.ProductCondition:
+    enum:
+    - new
+    - refurbished
+    - used
+    type: string
+    x-enum-varnames:
+    - ConditionNew
+    - ConditionRefurbished
+    - ConditionUsed
+  auto-store-api_internal_models.ProductImage:
+    properties:
+      alt_text:
+        type: string
+      created_at:
+        type: string
+      display_order:
+        type: integer
+      id:
+        type: string
+      is_primary:
+        type: boolean
+      product_id:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+    type: object
+  auto-store-api_internal_models.Review:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      product:
+        $ref: '#/definitions/auto-store-api_internal_models.Product'
+      product_id:
+        type: string
+      rating:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/auto-store-api_internal_models.User'
+      user_id:
+        type: string
+      verified_purchase:
+        type: boolean
+    type: object
+  auto-store-api_internal_models.Role:
+    enum:
+    - ADMIN
+    - VENDOR
+    - CUSTOMER
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleVendor
+    - RoleCustomer
+  auto-store-api_internal_models.Specification:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      product_id:
+        type: string
+      spec_name:
+        type: string
+      spec_value:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  auto-store-api_internal_models.Tag:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Product'
+        type: array
+      slug:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  auto-store-api_internal_models.User:
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Address'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/auto-store-api_internal_models.Role'
+      updated_at:
+        type: string
+    type: object
+  auto-store-api_internal_models.VehicleCompatibility:
+    properties:
+      created_at:
+        type: string
+      engine:
+        type: string
+      id:
+        type: string
+      make:
+        type: string
+      model:
+        type: string
+      notes:
+        type: string
+      product_id:
+        type: string
+      trim:
+        type: string
+      updated_at:
+        type: string
+      year_end:
+        type: integer
+      year_start:
+        type: integer
+    type: object
+  auto-store-api_internal_utils.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      errors:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_utils.FieldErr'
+        type: array
+      meta:
+        $ref: '#/definitions/auto-store-api_internal_utils.Meta'
+      success:
+        type: boolean
+    type: object
+  auto-store-api_internal_utils.FieldErr:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  auto-store-api_internal_utils.Meta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Production-ready RESTful API for an auto-parts e-commerce platform.
+  title: Auto-Store API
+  version: "1.0"
+paths:
+  /api/v1/admin/orders:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Order status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List all orders (Admin)
+      tags:
+      - admin
+  /api/v1/admin/orders/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateOrderStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update order status (Admin)
+      tags:
+      - admin
+  /api/v1/admin/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role (ADMIN, VENDOR, CUSTOMER)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user role (Admin only)
+      tags:
+      - users
+  /api/v1/auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Request password reset
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: User login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /api/v1/auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Token and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Reset password with token
+      tags:
+      - auth
+  /api/v1/auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Verification token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Verify email address
+      tags:
+      - auth
+  /api/v1/cart:
+    delete:
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Clear cart
+      tags:
+      - cart
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get user's cart
+      tags:
+      - cart
+  /api/v1/cart/items:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cart item
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.AddCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add item to cart
+      tags:
+      - cart
+  /api/v1/cart/items/{id}:
+    delete:
+      parameters:
+      - description: Cart item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove item from cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cart item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Quantity
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update cart item quantity
+      tags:
+      - cart
+  /api/v1/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      summary: List all categories (tree)
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create category (Admin)
+      tags:
+      - categories
+  /api/v1/categories/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete category (Admin)
+      tags:
+      - categories
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Get category by ID
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Category data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update category (Admin)
+      tags:
+      - categories
+  /api/v1/categories/{id}/products:
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Get products in category
+      tags:
+      - categories
+  /api/v1/orders:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List user's orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create order from cart
+      tags:
+      - orders
+  /api/v1/orders/{id}:
+    get:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get order details
+      tags:
+      - orders
+  /api/v1/orders/{id}/cancel:
+    put:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel order
+      tags:
+      - orders
+  /api/v1/products:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: List products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create product (Admin/Vendor)
+      tags:
+      - products
+  /api/v1/products/{id}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete product (Admin)
+      tags:
+      - products
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Get product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update product (Admin/Vendor)
+      tags:
+      - products
+  /api/v1/products/{id}/compatibility:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Get vehicle compatibility for product
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Compatibilities (make, model, year_start, year_end, engine, trim,
+          notes)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.AddVehicleCompatibilitiesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_models.VehicleCompatibility'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add vehicle compatibilities to a product (Admin/Vendor)
+      tags:
+      - products
+  /api/v1/products/{id}/images:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Images (url, optional alt_text, display_order, is_primary)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.AddProductImagesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_models.ProductImage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add images to a product (Admin/Vendor)
+      tags:
+      - products
+  /api/v1/products/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Products to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateProductsBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateProductsBatchResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create multiple products (Admin/Vendor)
+      tags:
+      - products
+  /api/v1/products/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - description: Category slug
+        in: query
+        name: category
+        type: string
+      - description: Tags (comma-separated)
+        in: query
+        name: tags
+        type: string
+      - description: Vehicle make
+        in: query
+        name: make
+        type: string
+      - description: Vehicle model
+        in: query
+        name: model
+        type: string
+      - description: Year range (e.g. 2015-2020)
+        in: query
+        name: year
+        type: string
+      - description: Min price
+        in: query
+        name: minPrice
+        type: number
+      - description: Max price
+        in: query
+        name: maxPrice
+        type: number
+      - description: new|used|refurbished
+        in: query
+        name: condition
+        type: string
+      - description: price_asc|price_desc|newest
+        in: query
+        name: sort
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Advanced product search
+      tags:
+      - products
+  /api/v1/users/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile
+      tags:
+      - users
+  /api/v1/users/me/addresses:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get user addresses
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add address
+      tags:
+      - users
+  /api/v1/users/me/addresses/{id}:
+    delete:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete address
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Address data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update address
+      tags:
+      - users
+  /api/v1/wishlist:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get user's wishlist
+      tags:
+      - wishlist
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            product_id:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add product to wishlist
+      tags:
+      - wishlist
+  /api/v1/wishlist/{productId}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Remove product from wishlist
+      tags:
+      - wishlist
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

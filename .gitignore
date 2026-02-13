@@ -1,0 +1,55 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+/dist/
+/build/
+*.out
+
+# Go
+*.test
+*.prof
+coverage.out
+coverage.html
+vendor/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# IDE & editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Logs & temp
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# Docker
+.docker/
+
+# Air (live reload)
+tmp/

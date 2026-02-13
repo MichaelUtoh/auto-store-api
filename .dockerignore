@@ -1,0 +1,30 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+*.swp
+*.swo
+*~
+
+# Local env (use docker-compose env instead)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+bin/
+tmp/
+*.exe
+*.test
+coverage.out
+coverage.html
+
+# Keep docs/ (contains generated Swagger docs for /docs)
+
+# Misc
+README.md
+Makefile
+
+# Air / dev
+.air.toml
