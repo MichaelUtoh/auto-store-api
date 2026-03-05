@@ -707,7 +707,7 @@ definitions:
       total_pages:
         type: integer
     type: object
-host: localhost:8080
+host: localhost:8089
 info:
   contact: {}
   description: Production-ready RESTful API for an auto-parts e-commerce platform.

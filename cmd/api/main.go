@@ -2,7 +2,7 @@
 // @title Auto-Store API
 // @version 1.0
 // @description Production-ready RESTful API for an auto-parts e-commerce platform.
-// @host localhost:8080
+// @host localhost:8089
 // @BasePath /
 // @schemes http https
 //
@@ -60,8 +60,9 @@ func main() {
 
 	r := router.Setup(cfg, database.DB, logger.Log)
 
+	// Bind to 0.0.0.0 so Docker and devices on the network (e.g. Flutter app on simulator/emulator) can connect
 	srv := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
+		Addr:         "0.0.0.0:" + cfg.Server.Port,
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,

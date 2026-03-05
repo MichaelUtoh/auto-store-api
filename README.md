@@ -47,20 +47,20 @@ go mod download
 go run ./cmd/api
 ```
 
-Server listens on `http://localhost:8080` (or `PORT` from env).
+Server listens on `http://localhost:8089` (or `PORT` from env).
 
-- **API docs (Swagger UI):** [http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html)
+- **API docs (Swagger UI):** [http://localhost:8089/docs/index.html](http://localhost:8089/docs/index.html)
 
 ### Docker
 
 ```bash
 docker-compose up -d
-# API: http://localhost:8080
-# Docs: http://localhost:8080/docs/index.html
+# API: http://localhost:8089
+# Docs: http://localhost:8089/docs/index.html
 # Postgres: localhost:5432, Redis: localhost:6379
 ```
 
-The API container retries the database connection on startup (when `DB_HOST` is `postgres`), so it waits for Postgres to be ready. If Docker fails: ensure ports 8080, 5432, 6379 are free; run `docker-compose build --no-cache` then `docker-compose up -d`; check logs with `docker-compose logs -f api`.
+The API container retries the database connection on startup (when `DB_HOST` is `postgres`), so it waits for Postgres to be ready. If Docker fails: ensure ports 8089, 5432, 6379 are free; run `docker-compose build --no-cache` then `docker-compose up -d`; check logs with `docker-compose logs -f api`.
 
 ### Makefile
 
@@ -124,7 +124,7 @@ auto-store-api/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | HTTP port | 8080 |
+| `PORT` | HTTP port | 8089 |
 | `DB_*` | PostgreSQL connection | - |
 | `REDIS_*` | Redis connection | - |
 | `JWT_SECRET` | JWT signing key | - |

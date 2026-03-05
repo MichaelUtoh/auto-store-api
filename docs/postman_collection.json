@@ -5,7 +5,7 @@
 		"description": "Auto-parts e-commerce API - import into Postman for testing"
 	},
 	"variable": [
-		{ "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+		{ "key": "baseUrl", "value": "http://localhost:8089/api/v1" },
 		{ "key": "accessToken", "value": "" }
 	],
 	"item": [
@@ -92,7 +92,7 @@
 			"name": "Health",
 			"request": {
 				"method": "GET",
-				"url": "http://localhost:8080/health"
+				"url": "http://localhost:8089/health"
 			}
 		}
 	]
