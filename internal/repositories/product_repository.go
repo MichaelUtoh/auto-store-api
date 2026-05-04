@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"auto-store-api/internal/models"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -49,19 +50,39 @@ func (r *ProductRepository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&models.Product{}, "id = ?", id).Error
 }
 
-func (r *ProductRepository) List(offset, limit int, filters map[string]interface{}) ([]models.Product, int64, error) {
+// List returns a page of products, optionally filtered by category slug, search string,
+// and/or min/max price (inclusive on each bound when set).
+func (r *ProductRepository) List(offset, limit int, categorySlug, search string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
 	var products []models.Product
 	var total int64
-	q := r.db.Model(&models.Product{})
-	for k, v := range filters {
-		if v != nil && v != "" && v != 0 {
-			q = q.Where(k+" = ?", v)
+	q := r.db.Model(&models.Product{}).Preload("Images")
+	if minPrice != nil {
+		q = q.Where("price >= ?", *minPrice)
+	}
+	if maxPrice != nil {
+		q = q.Where("price <= ?", *maxPrice)
+	}
+	if search != "" {
+		term := "%" + strings.ToLower(search) + "%"
+		q = q.Where("(LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(sku) LIKE ? OR LOWER(manufacturer_part_number) LIKE ?)",
+			term, term, term, term)
+	}
+	if categorySlug != "" {
+		var cat models.Category
+		if err := r.db.Where("slug = ?", categorySlug).First(&cat).Error; err == nil {
+			var productIDs []uuid.UUID
+			r.db.Model(&models.ProductCategory{}).Where("category_id = ?", cat.ID).Pluck("product_id", &productIDs)
+			if len(productIDs) > 0 {
+				q = q.Where("id IN ?", productIDs)
+			} else {
+				q = q.Where("1 = 0")
+			}
 		}
 	}
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	err := q.Offset(offset).Limit(limit).Find(&products).Error
+	err := q.Order("created_at DESC").Offset(offset).Limit(limit).Find(&products).Error
 	return products, total, err
 }
 
@@ -71,7 +92,7 @@ func (r *ProductRepository) ListByIDs(ids []uuid.UUID, offset, limit int) ([]mod
 	}
 	var products []models.Product
 	total := int64(len(ids))
-	err := r.db.Where("id IN ?", ids).Offset(offset).Limit(limit).Find(&products).Error
+	err := r.db.Preload("Images").Where("id IN ?", ids).Offset(offset).Limit(limit).Find(&products).Error
 	return products, total, err
 }
 
@@ -114,4 +135,30 @@ func (r *ProductRepository) GetProductImagesByProductID(productID uuid.UUID) ([]
 // UnsetPrimaryImages sets is_primary = false for all images of a product.
 func (r *ProductRepository) UnsetPrimaryImages(productID uuid.UUID) error {
 	return r.db.Model(&models.ProductImage{}).Where("product_id = ?", productID).Update("is_primary", false).Error
+}
+
+// DeleteProductImageByID soft-deletes an image if it belongs to the product.
+func (r *ProductRepository) DeleteProductImageByID(productID, imageID uuid.UUID) error {
+	var img models.ProductImage
+	if err := r.db.Where("id = ? AND product_id = ?", imageID, productID).First(&img).Error; err != nil {
+		return err
+	}
+	return r.db.Delete(&img).Error
+}
+
+// ReplaceProductImages deletes existing images for the product and inserts rows (transactional).
+func (r *ProductRepository) ReplaceProductImages(productID uuid.UUID, images []models.ProductImage) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", productID).Delete(&models.ProductImage{}).Error; err != nil {
+			return err
+		}
+		for i := range images {
+			images[i].ID = uuid.Nil
+			images[i].ProductID = productID
+			if err := tx.Create(&images[i]).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

@@ -34,7 +34,7 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/products` | No | List products (paginated; query: page, limit). |
+| GET | `/api/v1/products` | No | List products (paginated; query: page, limit, category, search, **min**, **max** price; if both min and max are set, max must be **greater than** min). |
 | GET | `/api/v1/products/search` | No | Search products (query: q, category, tags, make, model, year, minPrice, maxPrice, condition, brand, sort, page, limit). |
 | GET | `/api/v1/products/:id` | No | Get product by ID. |
 | GET | `/api/v1/products/:id/compatibility` | No | Get vehicle compatibility for product. |
@@ -44,6 +44,7 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 | POST | `/api/v1/products/batch` | Admin/Vendor | Create multiple products. |
 | PUT | `/api/v1/products/:id` | Admin/Vendor | Update product. |
 | POST | `/api/v1/products/:id/images` | Admin/Vendor | Add images to product. |
+| DELETE | `/api/v1/products/:id/images/:imageId` | Admin/Vendor | Delete one image (`imageId` = product_images row UUID). |
 | POST | `/api/v1/products/:id/compatibility` | Admin/Vendor | Add vehicle compatibilities. |
 | DELETE | `/api/v1/products/:id` | Admin | Delete product. |
 
@@ -90,7 +91,7 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/api/v1/users/me` | Yes | Get current user profile. |
-| PUT | `/api/v1/users/me` | Yes | Update profile (first_name, last_name, phone). |
+| PUT / PATCH | `/api/v1/users/me` | Yes | Update profile (`first_name` / `firstName`, `last_name` / `lastName`, `phone`). |
 | GET | `/api/v1/users/me/addresses` | Yes | List user's addresses. |
 | POST | `/api/v1/users/me/addresses` | Yes | Add address. |
 | PUT | `/api/v1/users/me/addresses/:id` | Yes | Update address. |

@@ -60,7 +60,15 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
-	item, err := h.cart.AddItem(userID, req.ProductID, req.Quantity)
+	productID := req.ProductID
+	if productID == uuid.Nil {
+		productID = req.ProductIDCamel
+	}
+	if productID == uuid.Nil {
+		utils.JSONBadRequest(c, "product_id is required")
+		return
+	}
+	item, err := h.cart.AddItem(userID, productID, req.Quantity)
 	if err != nil {
 		if err == services.ErrProductNotFound {
 			utils.JSONNotFound(c, "product not found")

@@ -47,6 +47,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 // @Success 200 {object} dto.UserResponse
 // @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/users/me [put]
+// @Router /api/v1/users/me [patch]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	user, ok := middleware.GetUser(c)
 	if !ok {
@@ -58,7 +59,14 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
-	if err := h.user.UpdateProfile(user, req.FirstName, req.LastName, req.Phone); err != nil {
+	firstName, lastName := req.FirstName, req.LastName
+	if firstName == nil {
+		firstName = req.FirstNameCamel
+	}
+	if lastName == nil {
+		lastName = req.LastNameCamel
+	}
+	if err := h.user.UpdateProfile(user, firstName, lastName, req.Phone); err != nil {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}

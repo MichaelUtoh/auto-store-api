@@ -4,11 +4,13 @@ definitions:
     properties:
       product_id:
         type: string
+      productId:
+        description: alias for camelCase JSON clients
+        type: string
       quantity:
         minimum: 1
         type: integer
     required:
-    - product_id
     - quantity
     type: object
   auto-store-api_internal_handlers_dto.AddProductImagesRequest:
@@ -320,6 +322,14 @@ definitions:
         type: string
       dimensions:
         type: string
+      images:
+        description: |-
+          Images replaces all product images when set (JSON key present).
+          Omit the key to leave images unchanged. Use [] to remove all images.
+          Same shape as POST /products/:id/images items: url, alt_text, display_order, is_primary.
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.ProductImageItem'
+        type: array
       manufacturer_part_number:
         type: string
       name:
@@ -341,7 +351,12 @@ definitions:
     properties:
       first_name:
         type: string
+      firstName:
+        description: Camel-case aliases for typical frontend payloads
+        type: string
       last_name:
+        type: string
+      lastName:
         type: string
       phone:
         type: string
@@ -706,6 +721,13 @@ definitions:
         type: integer
       total_pages:
         type: integer
+    type: object
+  internal_handlers.UploadImagesResponse:
+    properties:
+      urls:
+        items:
+          type: string
+        type: array
     type: object
 host: localhost:8089
 info:
@@ -1328,6 +1350,10 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Category slug (filter to products in that category)
+        in: query
+        name: category
+        type: string
       produces:
       - application/json
       responses:
@@ -1414,7 +1440,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: Product data
+      - description: Product data (optional images replaces all when key present)
         in: body
         name: body
         required: true
@@ -1540,6 +1566,35 @@ paths:
       summary: Add images to a product (Admin/Vendor)
       tags:
       - products
+  /api/v1/products/{id}/images/{imageId}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product image ID
+        in: path
+        name: imageId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete one product image (Admin/Vendor)
+      tags:
+      - products
   /api/v1/products/batch:
     post:
       consumes:
@@ -1628,6 +1683,40 @@ paths:
       summary: Advanced product search
       tags:
       - products
+  /api/v1/upload/images:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: 'Image file(s); form key: file (multiple allowed)'
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers.UploadImagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload image(s) to S3 (Admin/Vendor)
+      tags:
+      - upload
   /api/v1/users/me:
     get:
       produces:
@@ -1640,6 +1729,32 @@ paths:
       security:
       - BearerAuth: []
       summary: Get current user profile
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update profile
       tags:
       - users
     put:

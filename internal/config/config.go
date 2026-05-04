@@ -87,6 +87,7 @@ type S3Config struct {
 	AccessKey string
 	SecretKey string
 	Endpoint  string
+	PublicURL string // optional; URL prefix returned to clients (see S3_PUBLIC_URL)
 }
 
 // Load loads configuration from environment
@@ -151,6 +152,7 @@ func Load() (*Config, error) {
 			AccessKey: getEnv("S3_ACCESS_KEY", ""),
 			SecretKey: getEnv("S3_SECRET_KEY", ""),
 			Endpoint:  getEnv("S3_ENDPOINT", ""),
+			PublicURL: getEnv("S3_PUBLIC_URL", ""),
 		},
 	}
 

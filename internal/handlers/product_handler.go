@@ -6,11 +6,14 @@ import (
 	"auto-store-api/internal/repositories"
 	"auto-store-api/internal/services"
 	"auto-store-api/internal/utils"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
@@ -27,12 +30,40 @@ func NewProductHandler(product *services.ProductService) *ProductHandler {
 // @Produce json
 // @Param page query int false "Page"
 // @Param limit query int false "Limit"
+// @Param category query string false "Category slug (filter to products in that category)"
+// @Param search query string false "Search text (matches name, description, sku, part number)"
+// @Param min query number false "Minimum price (inclusive)"
+// @Param max query number false "Maximum price (inclusive); if min and max are both set, max must be greater than min"
 // @Success 200 {object} utils.APIResponse
+// @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/products [get]
 func (h *ProductHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	products, total, err := h.product.List(page, limit, nil)
+	categorySlug := strings.TrimSpace(c.Query("category"))
+	search := strings.TrimSpace(c.Query("search"))
+	var minPrice, maxPrice *float64
+	if s := strings.TrimSpace(c.Query("min")); s != "" {
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			utils.JSONBadRequest(c, "invalid min: must be a number")
+			return
+		}
+		minPrice = &v
+	}
+	if s := strings.TrimSpace(c.Query("max")); s != "" {
+		v, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			utils.JSONBadRequest(c, "invalid max: must be a number")
+			return
+		}
+		maxPrice = &v
+	}
+	if minPrice != nil && maxPrice != nil && *maxPrice <= *minPrice {
+		utils.JSONBadRequest(c, "max must be greater than min when both are provided")
+		return
+	}
+	products, total, err := h.product.List(page, limit, categorySlug, search, minPrice, maxPrice)
 	if err != nil {
 		utils.JSONInternal(c, err.Error())
 		return
@@ -183,7 +214,7 @@ func (h *ProductHandler) CreateBatch(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Product ID"
-// @Param body body dto.UpdateProductRequest true "Product data"
+// @Param body body dto.UpdateProductRequest true "Product data (optional images replaces all when key present)"
 // @Success 200 {object} object
 // @Failure 400,404 {object} utils.APIResponse
 // @Router /api/v1/products/{id} [put]
@@ -239,6 +270,26 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	if err := h.product.Update(product, req.CategoryIDs, req.TagIDs); err != nil {
 		utils.JSONBadRequest(c, err.Error())
 		return
+	}
+	if req.Images != nil {
+		inputs := make([]services.AddImagesInput, len(*req.Images))
+		for i := range *req.Images {
+			item := (*req.Images)[i]
+			if item.URL == "" {
+				utils.JSONBadRequest(c, "images["+strconv.Itoa(i)+"].url is required")
+				return
+			}
+			inputs[i] = services.AddImagesInput{
+				URL:          item.URL,
+				AltText:      item.AltText,
+				DisplayOrder: item.DisplayOrder,
+				IsPrimary:    item.IsPrimary,
+			}
+		}
+		if err := h.product.ReplaceProductImages(id, inputs); err != nil {
+			utils.JSONNotFound(c, "product not found")
+			return
+		}
 	}
 	updated, _ := h.product.GetByID(id)
 	utils.JSON(c, http.StatusOK, updated)
@@ -424,4 +475,35 @@ func (h *ProductHandler) AddImages(c *gin.Context) {
 		return
 	}
 	utils.JSON(c, http.StatusCreated, created)
+}
+
+// DeleteProductImage godoc
+// @Summary Delete one product image (Admin/Vendor)
+// @Tags products
+// @Security BearerAuth
+// @Param id path string true "Product ID"
+// @Param imageId path string true "Product image ID"
+// @Success 204
+// @Failure 400,404 {object} utils.APIResponse
+// @Router /api/v1/products/{id}/images/{imageId} [delete]
+func (h *ProductHandler) DeleteProductImage(c *gin.Context) {
+	productID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.JSONBadRequest(c, "invalid product id")
+		return
+	}
+	imageID, err := uuid.Parse(c.Param("imageId"))
+	if err != nil {
+		utils.JSONBadRequest(c, "invalid image id")
+		return
+	}
+	if err := h.product.DeleteProductImage(productID, imageID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			utils.JSONNotFound(c, "product image not found")
+			return
+		}
+		utils.JSONInternal(c, err.Error())
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

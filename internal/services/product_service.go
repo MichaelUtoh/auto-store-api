@@ -123,11 +123,33 @@ func (s *ProductService) Update(p *models.Product, categoryIDs, tagIDs []uuid.UU
 	return nil
 }
 
+// DeleteProductImage removes one image from a product (by image row UUID).
+func (s *ProductService) DeleteProductImage(productID, imageID uuid.UUID) error {
+	return s.productRepo.DeleteProductImageByID(productID, imageID)
+}
+
+// ReplaceProductImages replaces all images for a product (empty slice removes all images).
+func (s *ProductService) ReplaceProductImages(productID uuid.UUID, images []AddImagesInput) error {
+	if _, err := s.productRepo.GetByID(productID); err != nil {
+		return err
+	}
+	rows := make([]models.ProductImage, 0, len(images))
+	for _, in := range images {
+		rows = append(rows, models.ProductImage{
+			URL:          in.URL,
+			AltText:      in.AltText,
+			DisplayOrder: in.DisplayOrder,
+			IsPrimary:    in.IsPrimary,
+		})
+	}
+	return s.productRepo.ReplaceProductImages(productID, rows)
+}
+
 func (s *ProductService) Delete(id uuid.UUID) error {
 	return s.productRepo.Delete(id)
 }
 
-func (s *ProductService) List(page, limit int, filters map[string]interface{}) ([]models.Product, int64, error) {
+func (s *ProductService) List(page, limit int, categorySlug, search string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -135,7 +157,7 @@ func (s *ProductService) List(page, limit int, filters map[string]interface{}) (
 		limit = 20
 	}
 	offset := (page - 1) * limit
-	return s.productRepo.List(offset, limit, filters)
+	return s.productRepo.List(offset, limit, categorySlug, search, minPrice, maxPrice)
 }
 
 func (s *ProductService) Search(params repositories.SearchParams) (*repositories.SearchResult, error) {

@@ -998,6 +998,12 @@
                         "description": "Limit",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category slug (filter to products in that category)",
+                        "name": "category",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1247,7 +1253,7 @@
                         "required": true
                     },
                     {
-                        "description": "Product data",
+                        "description": "Product data (optional images replaces all when key present)",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -1464,6 +1470,106 @@
                 }
             }
         },
+        "/api/v1/products/{id}/images/{imageId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Delete one product image (Admin/Vendor)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product image ID",
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/upload/images": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Upload image(s) to S3 (Admin/Vendor)",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file(s); form key: file (multiple allowed)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.UploadImagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/me": {
             "get": {
                 "security": [
@@ -1488,6 +1594,48 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update profile",
+                "parameters": [
+                    {
+                        "description": "Profile data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1793,10 +1941,13 @@
         "auto-store-api_internal_handlers_dto.AddCartItemRequest": {
             "type": "object",
             "required": [
-                "product_id",
                 "quantity"
             ],
             "properties": {
+                "productId": {
+                    "description": "alias for camelCase JSON clients",
+                    "type": "string"
+                },
                 "product_id": {
                     "type": "string"
                 },
@@ -2259,6 +2410,13 @@
                 "dimensions": {
                     "type": "string"
                 },
+                "images": {
+                    "description": "Images replaces all product images when set (JSON key present).\nOmit the key to leave images unchanged. Use [] to remove all images.\nSame shape as POST /products/:id/images items: url, alt_text, display_order, is_primary.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ProductImageItem"
+                    }
+                },
                 "manufacturer_part_number": {
                     "type": "string"
                 },
@@ -2288,7 +2446,14 @@
         "auto-store-api_internal_handlers_dto.UpdateProfileRequest": {
             "type": "object",
             "properties": {
+                "firstName": {
+                    "description": "Camel-case aliases for typical frontend payloads",
+                    "type": "string"
+                },
                 "first_name": {
+                    "type": "string"
+                },
+                "lastName": {
                     "type": "string"
                 },
                 "last_name": {
@@ -2835,6 +3000,17 @@
                 },
                 "total_pages": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_handlers.UploadImagesResponse": {
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }

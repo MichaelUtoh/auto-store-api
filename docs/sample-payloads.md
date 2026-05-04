@@ -214,6 +214,74 @@ Minimal:
 }
 ```
 
+**Optional `images`:** If the JSON includes an `images` key, it **replaces** all existing product images (same shape as POST `/products/:id/images`). Omit `images` entirely to leave images unchanged. Use `"images": []` to remove all images.
+
+```json
+{
+  "name": "Updated name only",
+  "images": [
+    {
+      "url": "https://cdn.example.com/p1.jpg",
+      "alt_text": "Main",
+      "display_order": 0,
+      "is_primary": true
+    }
+  ]
+}
+```
+
+---
+
+### POST /products/:id/images (Admin/Vendor)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `id` = product UUID
+
+**Request body:** JSON with an array of image objects. Each image is referenced by **URL** (the API does not accept file uploads; upload files to S3/Cloudinary/etc. first, then pass the resulting URLs here).
+
+```json
+{
+  "images": [
+    {
+      "url": "https://your-bucket.s3.region.amazonaws.com/products/bp-001-main.jpg",
+      "alt_text": "Ceramic brake pads front view",
+      "display_order": 0,
+      "is_primary": true
+    },
+    {
+      "url": "https://your-bucket.s3.region.amazonaws.com/products/bp-001-side.jpg",
+      "alt_text": "Side view",
+      "display_order": 1,
+      "is_primary": false
+    }
+  ]
+}
+```
+
+- `url` (required): valid URL (e.g. from your storage bucket).
+- `alt_text` (optional): max 255 chars.
+- `display_order` (optional): integer; images are ordered by this, then by created_at.
+- `is_primary` (optional): if `true`, this image is the main one; other images for the product are set to non-primary.
+
+**Success (201):** `data` is the array of created `ProductImage` objects (id, product_id, url, alt_text, display_order, is_primary, created_at, updated_at).
+
+---
+
+### DELETE /products/:id/images/:imageId (Admin/Vendor)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `id` = product UUID, `imageId` = **product image** UUID (the `id` field on the `ProductImage` row from GET product or POST images response — not the S3 URL).
+
+**Example:** `DELETE /products/550e8400-e29b-41d4-a716-446655440001/images/660e8400-e29b-41d4-a716-446655440099`
+
+No body.
+
+**Success:** 204 No Content.
+
+**404:** Image does not exist or does not belong to this product.
+
 ---
 
 ### DELETE /products/:id (Admin)

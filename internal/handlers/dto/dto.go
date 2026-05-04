@@ -2,6 +2,8 @@ package dto
 
 import (
 	"auto-store-api/internal/models"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -125,6 +127,33 @@ type UpdateProductRequest struct {
 	WarrantyMonths     *int        `json:"warranty_months"`
 	CategoryIDs        []uuid.UUID `json:"category_ids"`
 	TagIDs             []uuid.UUID `json:"tag_ids"`
+	// Images replaces all product images when set (JSON key present).
+	// Omit the key to leave images unchanged. Use [] to remove all images.
+	// Same shape as POST /products/:id/images items: url, alt_text, display_order, is_primary.
+	Images *UpdateProductImages `json:"images"`
+}
+
+// UpdateProductImages accepts either:
+// 1) []ProductImageItem objects, or
+// 2) []string URLs (shorthand; mapped to ProductImageItem{URL: ...}).
+type UpdateProductImages []ProductImageItem
+
+func (u *UpdateProductImages) UnmarshalJSON(data []byte) error {
+	var objs []ProductImageItem
+	if err := json.Unmarshal(data, &objs); err == nil {
+		*u = objs
+		return nil
+	}
+	var urls []string
+	if err := json.Unmarshal(data, &urls); err == nil {
+		items := make([]ProductImageItem, len(urls))
+		for i, v := range urls {
+			items[i] = ProductImageItem{URL: v}
+		}
+		*u = items
+		return nil
+	}
+	return fmt.Errorf("images must be an array of objects or array of url strings")
 }
 
 type SearchProductsQuery struct {
@@ -189,8 +218,9 @@ type UpdateCategoryRequest struct {
 
 // Cart
 type AddCartItemRequest struct {
-	ProductID uuid.UUID `json:"product_id" binding:"required"`
-	Quantity  int       `json:"quantity" binding:"required,min=1"`
+	ProductID      uuid.UUID `json:"product_id"`
+	ProductIDCamel uuid.UUID `json:"productId"` // alias for camelCase JSON clients
+	Quantity       int       `json:"quantity" binding:"required,min=1"`
 }
 
 type UpdateCartItemRequest struct {
@@ -240,6 +270,9 @@ type UpdateProfileRequest struct {
 	FirstName *string `json:"first_name"`
 	LastName  *string `json:"last_name"`
 	Phone     *string `json:"phone"`
+	// Camel-case aliases for typical frontend payloads
+	FirstNameCamel *string `json:"firstName"`
+	LastNameCamel  *string `json:"lastName"`
 }
 
 // User role (Admin only; values stored in caps: ADMIN, VENDOR, CUSTOMER)

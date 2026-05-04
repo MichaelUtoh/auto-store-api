@@ -9,6 +9,7 @@ import (
 	"auto-store-api/internal/services"
 	"auto-store-api/internal/validators"
 	"auto-store-api/pkg/auth"
+	"auto-store-api/pkg/storage"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -73,6 +74,19 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	wishlistH := handlers.NewWishlistHandler(wishlistSvc)
 	reviewH := handlers.NewReviewHandler(reviewSvc)
 
+	var store storage.Storage
+	if s3Store, err := storage.NewS3(storage.S3Config{
+		Bucket:    cfg.S3.Bucket,
+		Region:    cfg.S3.Region,
+		AccessKey: cfg.S3.AccessKey,
+		SecretKey: cfg.S3.SecretKey,
+		Endpoint:  cfg.S3.Endpoint,
+		PublicURL: cfg.S3.PublicURL,
+	}); err == nil && s3Store != nil {
+		store = s3Store
+	}
+	uploadH := handlers.NewUploadHandler(store, cfg.Upload.AllowedTypes, cfg.Upload.MaxSize)
+
 	api := r.Group("/api/v1")
 	{
 		authGroup := api.Group("/auth")
@@ -112,6 +126,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.PUT("/orders/:id/cancel", orderH.Cancel)
 			protected.GET("/users/me", userH.GetProfile)
 			protected.PUT("/users/me", userH.UpdateProfile)
+			protected.PATCH("/users/me", userH.UpdateProfile)
 			protected.GET("/users/me/addresses", userH.ListAddresses)
 			protected.POST("/users/me/addresses", userH.AddAddress)
 			protected.PUT("/users/me/addresses/:id", userH.UpdateAddress)
@@ -124,10 +139,12 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		adminProducts := api.Group("")
 		adminProducts.Use(middleware.AuthRequired(jwt, db), middleware.RequireRole(models.RoleAdmin, models.RoleVendor))
 		{
+			adminProducts.POST("/upload/images", uploadH.UploadImages)
 			adminProducts.POST("/products/batch", productH.CreateBatch)
 			adminProducts.POST("/products", productH.Create)
 			adminProducts.PUT("/products/:id", productH.Update)
 			adminProducts.POST("/products/:id/images", productH.AddImages)
+			adminProducts.DELETE("/products/:id/images/:imageId", productH.DeleteProductImage)
 			adminProducts.POST("/products/:id/compatibility", productH.AddCompatibilities)
 		}
 		adminOnly := api.Group("")
