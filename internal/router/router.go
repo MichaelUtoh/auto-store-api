@@ -52,6 +52,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	wishlistRepo := repositories.NewWishlistRepository(db)
 	addressRepo := repositories.NewAddressRepository(db)
 	reviewRepo := repositories.NewReviewRepository(db)
+	mechanicRepo := repositories.NewMechanicRepository(db)
 
 	authSvc := services.NewAuthService(userRepo, jwt, services.AuthConfig{
 		LockoutAttempts: cfg.RateLimit.LockoutAttempts,
@@ -64,6 +65,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	userSvc := services.NewUserService(userRepo, addressRepo, db)
 	wishlistSvc := services.NewWishlistService(wishlistRepo, db)
 	reviewSvc := services.NewReviewService(reviewRepo, orderRepo, productRepo, db)
+	mechanicSvc := services.NewMechanicService(mechanicRepo, userRepo, db)
 
 	authH := handlers.NewAuthHandler(authSvc)
 	productH := handlers.NewProductHandler(productSvc)
@@ -73,6 +75,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	userH := handlers.NewUserHandler(userSvc)
 	wishlistH := handlers.NewWishlistHandler(wishlistSvc)
 	reviewH := handlers.NewReviewHandler(reviewSvc)
+	mechanicH := handlers.NewMechanicHandler(mechanicSvc)
 
 	var store storage.Storage
 	if s3Store, err := storage.NewS3(storage.S3Config{
@@ -110,6 +113,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		api.GET("/categories", categoryH.List)
 		api.GET("/categories/:id", categoryH.Get)
 		api.GET("/categories/:id/products", categoryH.GetProducts)
+		api.GET("/mechanics", mechanicH.ListVerified)
+		api.GET("/mechanics/:id", mechanicH.GetPublicProfile)
 
 		protected := api.Group("")
 		protected.Use(middleware.AuthRequired(jwt, db))
@@ -134,6 +139,15 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.GET("/wishlist", wishlistH.Get)
 			protected.POST("/wishlist", wishlistH.Add)
 			protected.DELETE("/wishlist/:productId", wishlistH.Remove)
+
+			mechanicRoutes := protected.Group("/mechanic")
+			{
+				mechanicRoutes.POST("/apply", mechanicH.Apply)
+				mechanicRoutes.GET("/profile", mechanicH.GetMyProfile)
+				mechanicRoutes.PUT("/profile", mechanicH.UpdateMyProfile)
+				mechanicRoutes.POST("/documents", mechanicH.AddDocument)
+				mechanicRoutes.DELETE("/documents/:id", mechanicH.RemoveDocument)
+			}
 		}
 
 		adminProducts := api.Group("")
@@ -157,6 +171,10 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminOnly.GET("/admin/orders", orderH.ListAll)
 			adminOnly.PUT("/admin/orders/:id/status", orderH.UpdateStatus)
 			adminOnly.PUT("/admin/users/:id/role", userH.UpdateRole)
+			adminOnly.GET("/admin/mechanics", mechanicH.ListAdmin)
+			adminOnly.PUT("/admin/mechanics/:userId/verify", mechanicH.Verify)
+			adminOnly.PUT("/admin/mechanics/:userId/suspend", mechanicH.Suspend)
+			adminOnly.PUT("/admin/mechanics/:userId/reject", mechanicH.Reject)
 		}
 	}
 

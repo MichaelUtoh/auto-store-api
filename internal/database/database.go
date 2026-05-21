@@ -98,5 +98,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.WishlistItem{},
 		&models.PasswordResetToken{},
 		&models.EmailVerificationToken{},
+		&models.MechanicProfile{},
+		&models.MechanicDocument{},
 	)
 }

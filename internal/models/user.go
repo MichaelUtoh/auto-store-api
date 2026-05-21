@@ -13,6 +13,7 @@ const (
 	RoleAdmin    Role = "ADMIN"
 	RoleVendor   Role = "VENDOR"
 	RoleCustomer Role = "CUSTOMER"
+	RoleMechanic Role = "MECHANIC"
 )
 
 type User struct {
@@ -28,7 +29,8 @@ type User struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Addresses []Address `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
+	Addresses       []Address        `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
+	MechanicProfile *MechanicProfile `gorm:"foreignKey:UserID" json:"mechanic_profile,omitempty"`
 }
 
 func (User) TableName() string { return "users" }

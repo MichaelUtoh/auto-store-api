@@ -31,13 +31,40 @@ func AuthRequired(jwt *auth.JWTManager, db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		var user models.User
-		if err := db.First(&user, "id = ?", claims.UserID).Error; err != nil {
+		if err := db.Preload("MechanicProfile").First(&user, "id = ?", claims.UserID).Error; err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 			return
 		}
 		c.Set(ClaimsKey, claims)
 		c.Set(UserIDKey, user.ID)
 		c.Set(UserKey, &user)
+		c.Next()
+	}
+}
+
+// RequireVerifiedMechanic ensures the user has MECHANIC role and a verified mechanic profile.
+func RequireVerifiedMechanic(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userVal, exists := c.Get(UserKey)
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		user := userVal.(*models.User)
+		if user.Role != models.RoleMechanic {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "mechanic role required"})
+			return
+		}
+		var profile models.MechanicProfile
+		if err := db.First(&profile, "user_id = ?", user.ID).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "verified mechanic profile required"})
+			return
+		}
+		if profile.Status != models.MechanicStatusVerified {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "verified mechanic profile required"})
+			return
+		}
+		c.Set("mechanic_profile", &profile)
 		c.Next()
 	}
 }
@@ -75,7 +102,7 @@ func OptionalAuth(jwt *auth.JWTManager, db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		var user models.User
-		if err := db.First(&user, "id = ?", claims.UserID).Error; err == nil {
+		if err := db.Preload("MechanicProfile").First(&user, "id = ?", claims.UserID).Error; err == nil {
 			c.Set(ClaimsKey, claims)
 			c.Set(UserIDKey, user.ID)
 			c.Set(UserKey, &user)

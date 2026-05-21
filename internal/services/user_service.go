@@ -59,10 +59,10 @@ func (s *UserService) GetAddress(id, userID uuid.UUID) (*models.Address, error) 
 	return s.addressRepo.GetByIDAndUser(id, userID)
 }
 
-// UpdateRole sets a user's role. Only valid roles are ADMIN, VENDOR, CUSTOMER (stored in caps).
+// UpdateRole sets a user's role. Only valid roles are ADMIN, VENDOR, CUSTOMER, MECHANIC (stored in caps).
 func (s *UserService) UpdateRole(userID uuid.UUID, role models.Role) error {
-	if role != models.RoleAdmin && role != models.RoleVendor && role != models.RoleCustomer {
-		return errors.New("invalid role: must be ADMIN, VENDOR, or CUSTOMER")
+	if !models.IsValidRole(role) {
+		return errors.New("invalid role: must be ADMIN, VENDOR, CUSTOMER, or MECHANIC")
 	}
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {

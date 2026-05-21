@@ -79,7 +79,7 @@ Auth middleware may return **401** with body like `{ "error": "missing or invali
 - **Reset password:** `POST /api/v1/auth/reset-password` — Body: `token`, `new_password` (min 8).
 - **Verify email:** `POST /api/v1/auth/verify-email` — Body: `token`.
 
-**User object (from login/refresh/me):** `id`, `email`, `first_name`, `last_name`, `role` (ADMIN | VENDOR | CUSTOMER), `phone`, `email_verified`, `created_at`.
+**User object (from login/refresh/me):** `id`, `email`, `first_name`, `last_name`, `role` (ADMIN | VENDOR | CUSTOMER | MECHANIC), `phone`, `email_verified`, `created_at`, optional `mechanic_profile` (`id`, `status`, `business_name`, `is_verified`) when the user has applied as a mechanic.
 
 **Frontend auth:** Store `access_token` and `refresh_token` (e.g. httpOnly cookie via API route, or secure client storage if no backend proxy). Send `Authorization: Bearer <access_token>` on every request to protected endpoints. On 401: try refresh with `refresh_token`; if refresh succeeds, retry the request and persist new tokens; if refresh fails, clear tokens and redirect to login. Optionally use `expires_at` to refresh proactively.
 
@@ -118,7 +118,14 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 | Wishlist | GET / POST | `/wishlist` | Yes | POST body: product_id |
 | Wishlist remove | DELETE | `/wishlist/:productId` | Yes | |
 | Admin orders | GET / PUT | `/admin/orders`, `/admin/orders/:id/status` | Admin | |
-| Admin user role | PUT | `/admin/users/:id/role` | Admin | Body: role (ADMIN/VENDOR/CUSTOMER) |
+| Admin user role | PUT | `/admin/users/:id/role` | Admin | Body: role (ADMIN/VENDOR/CUSTOMER/MECHANIC) |
+| List mechanics | GET | `/mechanics` | No | Verified mechanics only; query: page, limit |
+| Mechanic public profile | GET | `/mechanics/:id` | No | Profile UUID; verified only |
+| Apply as mechanic | POST | `/mechanic/apply` | Yes | See docs/sample-payloads.md#mechanics |
+| My mechanic profile | GET/PUT | `/mechanic/profile` | Yes | Own profile; PUT when pending or verified |
+| Mechanic documents | POST/DELETE | `/mechanic/documents`, `/mechanic/documents/:id` | Yes | Verification uploads (URL after S3) |
+| Admin mechanics | GET | `/admin/mechanics` | Admin | Query: status, page, limit |
+| Verify/suspend/reject mechanic | PUT | `/admin/mechanics/:userId/verify` etc. | Admin | userId = user UUID |
 | Products (admin/vendor) | POST / PUT / etc. | `/products`, `/products/:id`, ... | Admin/Vendor | Create/update products, images, compatibility |
 | Categories (admin) | POST / PUT / DELETE | `/categories`, `/categories/:id` | Admin | |
 
@@ -128,7 +135,7 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 
 Define types that match the API (use `snake_case` in JSON; you can map to `camelCase` in TS if desired). Key entities:
 
-- **User:** id, email, first_name, last_name, role, phone, email_verified, created_at
+- **User:** id, email, first_name, last_name, role, phone, email_verified, created_at, mechanic_profile (optional)
 - **Product:** id, sku, name, description, brand, manufacturer_part_number, price, cost_price, stock_quantity, weight, dimensions, condition (new | refurbished | used), warranty_months, created_at, updated_at, categories?, tags?, images?, compatibilities?, reviews?
 - **ProductImage:** id, product_id, url, alt_text, display_order, is_primary
 - **Category:** id, parent_id, name, slug, description, level, parent?, children?, products?

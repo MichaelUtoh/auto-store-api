@@ -222,7 +222,7 @@ func (h *UserHandler) DeleteAddress(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Param body body dto.UpdateRoleRequest true "Role (ADMIN, VENDOR, CUSTOMER)"
+// @Param body body dto.UpdateRoleRequest true "Role (ADMIN, VENDOR, CUSTOMER, MECHANIC)"
 // @Success 200 {object} dto.UserResponse
 // @Failure 400,404 {object} utils.APIResponse
 // @Router /api/v1/admin/users/{id}/role [put]

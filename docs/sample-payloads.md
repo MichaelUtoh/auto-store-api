@@ -525,7 +525,7 @@ No body.
 }
 ```
 
-`role` must be one of: `ADMIN`, `VENDOR`, `CUSTOMER` (stored in caps).
+`role` must be one of: `ADMIN`, `VENDOR`, `CUSTOMER`, `MECHANIC` (stored in caps).
 
 ---
 
@@ -536,6 +536,32 @@ No body.
 **Headers:** `Authorization: Bearer <access_token>`
 
 No body.
+
+**Response (when user has a mechanic application):** `data` may include `mechanic_profile`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "mechanic@example.com",
+    "first_name": "Alex",
+    "last_name": "Rivera",
+    "role": "MECHANIC",
+    "phone": "+1 555-222-3333",
+    "email_verified": true,
+    "created_at": "2026-05-01T12:00:00Z",
+    "mechanic_profile": {
+      "id": "660e8400-e29b-41d4-a716-446655440010",
+      "status": "verified",
+      "business_name": "Bay Area Brakes",
+      "is_verified": true
+    }
+  }
+}
+```
+
+`mechanic_profile` is omitted when the user has not applied. After apply (before admin verify), `role` may still be `CUSTOMER` with `status`: `pending` and `is_verified`: `false`.
 
 ---
 
@@ -647,6 +673,289 @@ No body.
 Example: `DELETE /wishlist/550e8400-e29b-41d4-a716-446655440001`
 
 No body.
+
+---
+
+## Mechanics
+
+Mechanic identity supports a verification workflow: users **apply**, admins **verify / suspend / reject**, and only **verified** profiles appear on public listings.
+
+See also: [mechanics.md](./mechanics.md) for roles, statuses, and flow overview.
+
+### Roles and profile status
+
+| User `role` | Set when |
+|-------------|----------|
+| `CUSTOMER` | Default registration; restored on **reject** if user was `MECHANIC` |
+| `MECHANIC` | Admin **verify**, or admin assigns via `PUT /admin/users/:id/role` |
+
+| Profile `status` | Meaning |
+|------------------|---------|
+| `pending` | Application submitted; awaiting admin review |
+| `verified` | Approved; listed publicly; user role set to `MECHANIC` |
+| `suspended` | Temporarily blocked (optional `reason` stored server-side) |
+| `rejected` | Application denied (`reason` required on reject) |
+
+**Document types** (for verification uploads): `license`, `insurance`, `certification`, `other`.
+
+Upload files first via `POST /upload/images` (Admin/Vendor) or your S3 flow, then pass the returned URL in document payloads.
+
+---
+
+### GET /mechanics (public)
+
+List verified mechanics only.
+
+**Query (optional):**
+```
+?page=1&limit=20
+```
+
+**Response (paginated):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440010",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "business_name": "Bay Area Brakes",
+      "bio": "ASE-certified brake and suspension work.",
+      "phone": "+1 555-222-3333",
+      "street": "100 Industrial Way",
+      "city": "San Jose",
+      "state": "CA",
+      "postal_code": "95112",
+      "country": "US",
+      "latitude": 37.3382,
+      "longitude": -121.8863,
+      "service_radius_km": 40,
+      "status": "verified",
+      "rating_avg": 0,
+      "rating_count": 0,
+      "verified_at": "2026-05-10T14:00:00Z",
+      "created_at": "2026-05-08T10:00:00Z",
+      "updated_at": "2026-05-10T14:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "total_pages": 1
+  }
+}
+```
+
+Public responses do **not** include `documents`.
+
+---
+
+### GET /mechanics/:id (public)
+
+**Path:** `id` = mechanic **profile** UUID (not user UUID).
+
+Returns 404 if profile is not `verified`.
+
+Same shape as a single item in the list above.
+
+---
+
+### POST /mechanic/apply
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Submit a mechanic application. One profile per user. Does **not** change `role` until admin verifies.
+
+**Request body:**
+```json
+{
+  "business_name": "Bay Area Brakes",
+  "bio": "ASE-certified, 10+ years. Brakes, suspension, steering.",
+  "phone": "+1 555-222-3333",
+  "street": "100 Industrial Way",
+  "city": "San Jose",
+  "state": "CA",
+  "postal_code": "95112",
+  "country": "US",
+  "latitude": 37.3382,
+  "longitude": -121.8863,
+  "service_radius_km": 40,
+  "documents": [
+    {
+      "document_type": "license",
+      "url": "https://cdn.example.com/uploads/ase-cert.pdf",
+      "file_name": "ase-cert.pdf"
+    },
+    {
+      "document_type": "insurance",
+      "url": "https://cdn.example.com/uploads/liability.pdf",
+      "file_name": "liability-insurance.pdf"
+    }
+  ]
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `business_name` | Yes | Max 200 chars |
+| `city`, `state`, `postal_code` | Yes | |
+| `bio`, `street`, `phone`, `country` | No | `country` defaults to `US` if omitted |
+| `latitude`, `longitude` | No | For future geo matching |
+| `service_radius_km` | No | 1–500; defaults to 25 |
+| `documents` | No | Each needs `document_type`, `url` (valid URL) |
+
+**Response:** `201` with full profile in `data` (includes `documents`, `status`: `pending`).
+
+**Errors:** `409` if profile already exists for this user.
+
+---
+
+### GET /mechanic/profile
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Returns the authenticated user's mechanic profile including documents.
+
+**Response:** `200` — same profile shape as apply response.
+
+**Errors:** `404` if user has not applied.
+
+---
+
+### PUT /mechanic/profile
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Update own profile. Allowed only when `status` is `pending` or `verified`.
+
+**Request body (all fields optional):**
+```json
+{
+  "business_name": "Bay Area Brakes & Suspension",
+  "bio": "Updated description.",
+  "phone": "+1 555-222-4444",
+  "street": "200 Industrial Way",
+  "city": "San Jose",
+  "state": "CA",
+  "postal_code": "95113",
+  "country": "US",
+  "latitude": 37.34,
+  "longitude": -121.89,
+  "service_radius_km": 50
+}
+```
+
+**Errors:** `400` if status is `suspended` or `rejected`.
+
+---
+
+### POST /mechanic/documents
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Add a verification document to an existing profile.
+
+**Request body:**
+```json
+{
+  "document_type": "certification",
+  "url": "https://cdn.example.com/uploads/ase-master.pdf",
+  "file_name": "ase-master.pdf"
+}
+```
+
+**Response:** `201` — document object in `data`:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "770e8400-e29b-41d4-a716-446655440020",
+    "document_type": "certification",
+    "url": "https://cdn.example.com/uploads/ase-master.pdf",
+    "file_name": "ase-master.pdf",
+    "status": "pending",
+    "created_at": "2026-05-08T11:00:00Z"
+  }
+}
+```
+
+---
+
+### DELETE /mechanic/documents/:id
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `id` = mechanic document UUID
+
+No body. **Response:** `204`.
+
+---
+
+### GET /admin/mechanics (Admin)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+List mechanic profiles for admin review.
+
+**Query (optional):**
+```
+?status=pending&page=1&limit=20
+```
+
+`status`: `pending`, `verified`, `suspended`, or `rejected`.
+
+**Response:** Paginated list; each item includes `documents` (unlike public list).
+
+---
+
+### PUT /admin/mechanics/:userId/verify (Admin)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `userId` = applicant's **user** UUID (not profile UUID)
+
+No body required.
+
+**Effect:** Sets profile `status` to `verified`, sets `verified_at`, assigns user `role` to `MECHANIC`.
+
+**Response:** `200` — updated profile in `data`.
+
+---
+
+### PUT /admin/mechanics/:userId/suspend (Admin)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `userId` = user UUID
+
+**Request body (optional):**
+```json
+{
+  "reason": "Insurance document expired."
+}
+```
+
+**Effect:** Sets profile `status` to `suspended`. User keeps `MECHANIC` role.
+
+---
+
+### PUT /admin/mechanics/:userId/reject (Admin)
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `userId` = user UUID
+
+**Request body:**
+```json
+{
+  "reason": "Unable to verify business license."
+}
+```
+
+`reason` is **required**.
+
+**Effect:** Sets profile `status` to `rejected`. If user `role` was `MECHANIC`, reverts to `CUSTOMER`.
 
 ---
 

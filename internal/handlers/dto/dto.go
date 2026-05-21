@@ -48,18 +48,26 @@ type VerifyEmailRequest struct {
 }
 
 type UserResponse struct {
-	ID            uuid.UUID `json:"id"`
-	Email         string    `json:"email"`
-	FirstName     string    `json:"first_name"`
-	LastName      string    `json:"last_name"`
-	Role          string    `json:"role"`
-	Phone         string    `json:"phone"`
-	EmailVerified bool      `json:"email_verified"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID              uuid.UUID                  `json:"id"`
+	Email           string                     `json:"email"`
+	FirstName       string                     `json:"first_name"`
+	LastName        string                     `json:"last_name"`
+	Role            string                     `json:"role"`
+	Phone           string                     `json:"phone"`
+	EmailVerified   bool                       `json:"email_verified"`
+	CreatedAt       time.Time                  `json:"created_at"`
+	MechanicProfile *MechanicProfileSummary    `json:"mechanic_profile,omitempty"`
+}
+
+type MechanicProfileSummary struct {
+	ID           uuid.UUID `json:"id"`
+	Status       string    `json:"status"`
+	BusinessName string    `json:"business_name"`
+	IsVerified   bool      `json:"is_verified"`
 }
 
 func UserToResponse(u *models.User) UserResponse {
-	return UserResponse{
+	resp := UserResponse{
 		ID:            u.ID,
 		Email:         u.Email,
 		FirstName:     u.FirstName,
@@ -69,6 +77,15 @@ func UserToResponse(u *models.User) UserResponse {
 		EmailVerified: u.EmailVerified,
 		CreatedAt:     u.CreatedAt,
 	}
+	if u.MechanicProfile != nil {
+		resp.MechanicProfile = &MechanicProfileSummary{
+			ID:           u.MechanicProfile.ID,
+			Status:       string(u.MechanicProfile.Status),
+			BusinessName: u.MechanicProfile.BusinessName,
+			IsVerified:   u.MechanicProfile.IsVerified(),
+		}
+	}
+	return resp
 }
 
 // Products
@@ -275,7 +292,129 @@ type UpdateProfileRequest struct {
 	LastNameCamel  *string `json:"lastName"`
 }
 
-// User role (Admin only; values stored in caps: ADMIN, VENDOR, CUSTOMER)
+// User role (Admin only; values stored in caps: ADMIN, VENDOR, CUSTOMER, MECHANIC)
 type UpdateRoleRequest struct {
-	Role string `json:"role" binding:"required,oneof=ADMIN VENDOR CUSTOMER"`
+	Role string `json:"role" binding:"required,oneof=ADMIN VENDOR CUSTOMER MECHANIC"`
+}
+
+// Mechanics
+type MechanicApplyRequest struct {
+	BusinessName    string                    `json:"business_name" binding:"required,max=200"`
+	Bio             string                    `json:"bio" binding:"max=2000"`
+	Phone           string                    `json:"phone" binding:"omitempty,phone"`
+	Street          string                    `json:"street" binding:"max=200"`
+	City            string                    `json:"city" binding:"required,max=100"`
+	State           string                    `json:"state" binding:"required,max=100"`
+	PostalCode      string                    `json:"postal_code" binding:"required,max=20"`
+	Country         string                    `json:"country" binding:"omitempty,max=100"`
+	Latitude        *float64                  `json:"latitude"`
+	Longitude       *float64                  `json:"longitude"`
+	ServiceRadiusKm float64                   `json:"service_radius_km" binding:"omitempty,gte=1,lte=500"`
+	Documents       []MechanicDocumentRequest `json:"documents" binding:"omitempty,dive"`
+}
+
+type MechanicUpdateProfileRequest struct {
+	BusinessName    *string  `json:"business_name" binding:"omitempty,max=200"`
+	Bio             *string  `json:"bio" binding:"omitempty,max=2000"`
+	Phone           *string  `json:"phone" binding:"omitempty,phone"`
+	Street          *string  `json:"street" binding:"omitempty,max=200"`
+	City            *string  `json:"city" binding:"omitempty,max=100"`
+	State           *string  `json:"state" binding:"omitempty,max=100"`
+	PostalCode      *string  `json:"postal_code" binding:"omitempty,max=20"`
+	Country         *string  `json:"country" binding:"omitempty,max=100"`
+	Latitude        *float64 `json:"latitude"`
+	Longitude       *float64 `json:"longitude"`
+	ServiceRadiusKm *float64 `json:"service_radius_km" binding:"omitempty,gte=1,lte=500"`
+}
+
+type MechanicDocumentRequest struct {
+	DocumentType string `json:"document_type" binding:"required,oneof=license insurance certification other"`
+	URL          string `json:"url" binding:"required,url"`
+	FileName     string `json:"file_name" binding:"max=255"`
+}
+
+type MechanicAdminActionRequest struct {
+	Reason string `json:"reason"`
+}
+
+type MechanicDocumentResponse struct {
+	ID           uuid.UUID `json:"id"`
+	DocumentType string    `json:"document_type"`
+	URL          string    `json:"url"`
+	FileName     string    `json:"file_name"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type MechanicProfileResponse struct {
+	ID              uuid.UUID                  `json:"id"`
+	UserID          uuid.UUID                  `json:"user_id"`
+	BusinessName    string                     `json:"business_name"`
+	Bio             string                     `json:"bio"`
+	Phone           string                     `json:"phone"`
+	Street          string                     `json:"street"`
+	City            string                     `json:"city"`
+	State           string                     `json:"state"`
+	PostalCode      string                     `json:"postal_code"`
+	Country         string                     `json:"country"`
+	Latitude        *float64                   `json:"latitude,omitempty"`
+	Longitude       *float64                   `json:"longitude,omitempty"`
+	ServiceRadiusKm float64                    `json:"service_radius_km"`
+	Status          string                     `json:"status"`
+	RatingAvg       float64                    `json:"rating_avg"`
+	RatingCount     int                        `json:"rating_count"`
+	VerifiedAt      *time.Time                 `json:"verified_at,omitempty"`
+	Documents       []MechanicDocumentResponse `json:"documents,omitempty"`
+	CreatedAt       time.Time                  `json:"created_at"`
+	UpdatedAt       time.Time                  `json:"updated_at"`
+}
+
+func MechanicDocumentToResponse(d *models.MechanicDocument) MechanicDocumentResponse {
+	return MechanicDocumentResponse{
+		ID:           d.ID,
+		DocumentType: string(d.DocumentType),
+		URL:          d.URL,
+		FileName:     d.FileName,
+		Status:       string(d.Status),
+		CreatedAt:    d.CreatedAt,
+	}
+}
+
+func MechanicProfileToResponse(p *models.MechanicProfile) MechanicProfileResponse {
+	return mechanicProfileResponse(p, true)
+}
+
+func MechanicProfileToPublicResponse(p *models.MechanicProfile) MechanicProfileResponse {
+	return mechanicProfileResponse(p, false)
+}
+
+func mechanicProfileResponse(p *models.MechanicProfile, includePrivate bool) MechanicProfileResponse {
+	resp := MechanicProfileResponse{
+		ID:              p.ID,
+		UserID:          p.UserID,
+		BusinessName:    p.BusinessName,
+		Bio:             p.Bio,
+		Phone:           p.Phone,
+		Street:          p.Street,
+		City:            p.City,
+		State:           p.State,
+		PostalCode:      p.PostalCode,
+		Country:         p.Country,
+		Latitude:        p.Latitude,
+		Longitude:       p.Longitude,
+		ServiceRadiusKm: p.ServiceRadiusKm,
+		Status:          string(p.Status),
+		RatingAvg:       p.RatingAvg,
+		RatingCount:     p.RatingCount,
+		VerifiedAt:      p.VerifiedAt,
+		CreatedAt:       p.CreatedAt,
+		UpdatedAt:       p.UpdatedAt,
+	}
+	if includePrivate && len(p.Documents) > 0 {
+		resp.Documents = make([]MechanicDocumentResponse, len(p.Documents))
+		for i, d := range p.Documents {
+			resp.Documents[i] = MechanicDocumentToResponse(&d)
+		}
+	}
+	return resp
 }

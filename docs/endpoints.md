@@ -99,6 +99,24 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 
 ---
 
+## Mechanics (`/api/v1/mechanics`, `/api/v1/mechanic`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/mechanics` | No | List verified mechanics (query: page, limit). |
+| GET | `/api/v1/mechanics/:id` | No | Get verified mechanic public profile by profile ID. |
+| POST | `/api/v1/mechanic/apply` | Yes | Submit mechanic application (creates profile with status `pending`). |
+| GET | `/api/v1/mechanic/profile` | Yes | Get current user's mechanic profile (includes documents). |
+| PUT | `/api/v1/mechanic/profile` | Yes | Update own profile (allowed when status is `pending` or `verified`). |
+| POST | `/api/v1/mechanic/documents` | Yes | Add verification document (body: document_type, url, file_name). |
+| DELETE | `/api/v1/mechanic/documents/:id` | Yes | Remove a document from own profile. |
+
+**Document types:** `license`, `insurance`, `certification`, `other`.
+
+**Profile statuses:** `pending`, `verified`, `suspended`, `rejected`.
+
+---
+
 ## Wishlist (`/api/v1/wishlist`)
 
 | Method | Path | Auth | Description |
@@ -115,13 +133,18 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 |--------|------|------|-------------|
 | GET | `/api/v1/admin/orders` | Admin | List all orders (query: page, limit, status). |
 | PUT | `/api/v1/admin/orders/:id/status` | Admin | Update order status (body: status). |
-| PUT | `/api/v1/admin/users/:id/role` | Admin | Update user role (body: role — ADMIN, VENDOR, CUSTOMER). |
+| PUT | `/api/v1/admin/users/:id/role` | Admin | Update user role (body: role — ADMIN, VENDOR, CUSTOMER, MECHANIC). |
+| GET | `/api/v1/admin/mechanics` | Admin | List mechanic profiles (query: status, page, limit). |
+| PUT | `/api/v1/admin/mechanics/:userId/verify` | Admin | Verify mechanic; sets role to MECHANIC. |
+| PUT | `/api/v1/admin/mechanics/:userId/suspend` | Admin | Suspend mechanic (optional body: reason). |
+| PUT | `/api/v1/admin/mechanics/:userId/reject` | Admin | Reject application (body: reason required). |
 
 ---
 
 ## Summary
 
-- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews GET, categories list/get/products.
-- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, create product review.
+- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews GET, categories list/get/products, verified mechanics list/get.
+- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, create product review, mechanic apply/profile/documents.
 - **Admin or Vendor:** Products create/batch/update, product images, product compatibility.
-- **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update.
+- **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update, mechanic verification workflow.
+- **Mechanic (role MECHANIC, verified profile):** Use `RequireVerifiedMechanic` middleware on future mechanic-only routes (e.g. Q&A answers, install bookings).

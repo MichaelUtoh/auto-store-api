@@ -21,7 +21,7 @@ func (r *UserRepository) Create(user *models.User) error {
 
 func (r *UserRepository) GetByID(id uuid.UUID) (*models.User, error) {
 	var u models.User
-	err := r.db.First(&u, "id = ?", id).Error
+	err := r.db.Preload("MechanicProfile").First(&u, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,8 @@ Production-ready RESTful API for an auto-parts e-commerce platform built with Go
 
 ## Features
 
-- **Authentication**: JWT-based auth with refresh tokens, email verification, password reset, RBAC (Admin, Vendor, Customer)
+- **Authentication**: JWT-based auth with refresh tokens, email verification, password reset, RBAC (Admin, Vendor, Customer, Mechanic)
+- **Mechanic identity**: Mechanic profiles with verification workflow (apply, admin verify/suspend/reject)
 - **Products**: CRUD, advanced search (full-text, category, tags, vehicle compatibility, price range), reviews, compatibility
 - **Categories**: Hierarchical categories, tree listing, products by category
 - **Cart & Orders**: Cart management, checkout, order status (admin)
@@ -80,10 +81,13 @@ The API container retries the database connection on startup (when `DB_HOST` is 
 | **Orders** | `POST/GET /api/v1/orders`, `GET /api/v1/orders/:id`, `PUT /api/v1/orders/:id/cancel`, Admin: `GET /api/v1/admin/orders`, `PUT /api/v1/admin/orders/:id/status` |
 | **Users**  | `GET/PUT /api/v1/users/me`, `GET/POST/PUT/DELETE /api/v1/users/me/addresses` |
 | **Wishlist** | `GET /api/v1/wishlist`, `POST /api/v1/wishlist`, `DELETE /api/v1/wishlist/:productId` |
+| **Mechanics** | `GET /api/v1/mechanics`, `POST /api/v1/mechanic/apply`, `GET/PUT /api/v1/mechanic/profile`, Admin: `GET/PUT /api/v1/admin/mechanics/...` |
 
 Protected routes require header: `Authorization: Bearer <access_token>`.
 
 **Sample payloads:** See [docs/sample-payloads.md](docs/sample-payloads.md) for request/response examples for all endpoints.
+
+**Mechanics (roles & verification):** See [docs/mechanics.md](docs/mechanics.md) and [Mechanics samples](docs/sample-payloads.md#mechanics).
 
 ### Search example
 
