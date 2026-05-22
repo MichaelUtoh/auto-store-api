@@ -115,6 +115,48 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 
 **Profile statuses:** `pending`, `verified`, `suspended`, `rejected`.
 
+**Verified mechanic only** (installation marketplace):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/mechanic/installation/quotes` | Quote lines for this mechanic |
+| PATCH | `/api/v1/mechanic/installation/quotes/:id` | Update labor estimate |
+| PUT | `/api/v1/mechanic/installation/services` | Job types offered |
+| GET | `/api/v1/mechanic/installation/bookings` | Bookings |
+| PATCH | `/api/v1/mechanic/installation/bookings/:id/status` | Status lifecycle |
+
+See [installation-marketplace.md](./installation-marketplace.md).
+
+---
+
+## Installation marketplace (`/api/v1/installation`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/installation/job-types` | No | List install job catalog |
+| POST | `/api/v1/installation/quotes` | Yes | Request installation quotes |
+| GET | `/api/v1/installation/quotes` | Yes | List own quotes |
+| GET | `/api/v1/installation/quotes/:id` | Yes | Quote with mechanic lines |
+| POST | `/api/v1/installation/bookings` | Yes | Book selected line + time |
+| GET | `/api/v1/installation/bookings` | Yes | List own bookings |
+| GET | `/api/v1/installation/bookings/:id` | Yes | Booking detail |
+| PATCH | `/api/v1/installation/bookings/:id/cancel` | Yes | Cancel booking |
+
+---
+
+## Notifications (`/api/v1/notifications`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/notifications` | Yes | List in-app notifications (query: page, limit, unread_only). |
+| GET | `/api/v1/notifications/unread-count` | Yes | Unread in-app count for bell badge. |
+| PATCH | `/api/v1/notifications/:id/read` | Yes | Mark one notification read. |
+| PATCH | `/api/v1/notifications/read-all` | Yes | Mark all in-app notifications read. |
+| GET | `/api/v1/users/me/notification-preferences` | Yes | Get channel preferences. |
+| PUT | `/api/v1/users/me/notification-preferences` | Yes | Update preferences. |
+
+Email delivery is async via Redis queue + `cmd/worker`. See [notifications.md](./notifications.md).
+
 ---
 
 ## Wishlist (`/api/v1/wishlist`)
@@ -143,8 +185,8 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 
 ## Summary
 
-- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews GET, categories list/get/products, verified mechanics list/get.
-- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, create product review, mechanic apply/profile/documents.
+- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews GET, categories list/get/products, verified mechanics list/get, installation job types.
+- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, notifications, notification preferences, create product review, mechanic apply/profile/documents, installation quotes/bookings.
 - **Admin or Vendor:** Products create/batch/update, product images, product compatibility.
 - **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update, mechanic verification workflow.
-- **Mechanic (role MECHANIC, verified profile):** Use `RequireVerifiedMechanic` middleware on future mechanic-only routes (e.g. Q&A answers, install bookings).
+- **Mechanic (role MECHANIC, verified profile):** Installation quote responses, bookings, service catalog; future Q&A answers.

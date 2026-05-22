@@ -117,6 +117,11 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 | Cancel order | PUT | `/orders/:id/cancel` | Yes | |
 | Wishlist | GET / POST | `/wishlist` | Yes | POST body: product_id |
 | Wishlist remove | DELETE | `/wishlist/:productId` | Yes | |
+| Notifications | GET | `/notifications` | Yes | Query: page, limit, unread_only |
+| Notification count | GET | `/notifications/unread-count` | Yes | Bell badge |
+| Mark notification read | PATCH | `/notifications/:id/read` | Yes | |
+| Mark all read | PATCH | `/notifications/read-all` | Yes | |
+| Notification prefs | GET/PUT | `/users/me/notification-preferences` | Yes | email/sms/push/in_app toggles |
 | Admin orders | GET / PUT | `/admin/orders`, `/admin/orders/:id/status` | Admin | |
 | Admin user role | PUT | `/admin/users/:id/role` | Admin | Body: role (ADMIN/VENDOR/CUSTOMER/MECHANIC) |
 | List mechanics | GET | `/mechanics` | No | Verified mechanics only; query: page, limit |
@@ -165,6 +170,7 @@ Exact field names and nested structures: see backend `internal/models/` and `int
   - **Checkout:** Select shipping/billing addresses (from user addresses), payment method (e.g. text field for now), POST /orders. Redirect to order confirmation.
   - **Orders:** List (GET /orders) and detail (GET /orders/:id), cancel (PUT /orders/:id/cancel) when allowed.
   - **Wishlist:** GET /wishlist — list; add from product page; remove (DELETE /wishlist/:productId).
+  - **Notifications:** Header bell with GET /notifications/unread-count; dropdown from GET /notifications?unread_only=true; link via `payload.href`; mark read on click (PATCH /notifications/:id/read). Optional `/notifications` page. Poll or refetch on window focus (React Query `refetchOnWindowFocus`).
 
 - **Optional (Admin / Vendor)**
   - **Admin:** List all orders, update order status; list users, update user role. Product and category CRUD (create/edit/delete products, categories) if you want a full dashboard.

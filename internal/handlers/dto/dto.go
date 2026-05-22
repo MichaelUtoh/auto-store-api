@@ -418,3 +418,249 @@ func mechanicProfileResponse(p *models.MechanicProfile, includePrivate bool) Mec
 	}
 	return resp
 }
+
+// Notifications
+type NotificationResponse struct {
+	ID        uuid.UUID              `json:"id"`
+	Type      string                 `json:"type"`
+	Channel   string                 `json:"channel"`
+	Title     string                 `json:"title"`
+	Body      string                 `json:"body"`
+	Payload   map[string]interface{} `json:"payload,omitempty"`
+	ReadAt    *time.Time             `json:"read_at,omitempty"`
+	CreatedAt time.Time              `json:"created_at"`
+}
+
+type UnreadCountResponse struct {
+	Count int64 `json:"count"`
+}
+
+type NotificationPreferenceResponse struct {
+	EmailEnabled bool `json:"email_enabled"`
+	SmsEnabled   bool `json:"sms_enabled"`
+	PushEnabled  bool `json:"push_enabled"`
+	InAppEnabled bool `json:"in_app_enabled"`
+}
+
+type UpdateNotificationPreferenceRequest struct {
+	EmailEnabled *bool `json:"email_enabled"`
+	SmsEnabled   *bool `json:"sms_enabled"`
+	PushEnabled  *bool `json:"push_enabled"`
+	InAppEnabled *bool `json:"in_app_enabled"`
+}
+
+func NotificationToResponse(n *models.Notification) NotificationResponse {
+	resp := NotificationResponse{
+		ID:        n.ID,
+		Type:      string(n.Type),
+		Channel:   string(n.Channel),
+		Title:     n.Title,
+		Body:      n.Body,
+		ReadAt:    n.ReadAt,
+		CreatedAt: n.CreatedAt,
+	}
+	if n.Payload != "" {
+		var payload map[string]interface{}
+		if err := json.Unmarshal([]byte(n.Payload), &payload); err == nil {
+			resp.Payload = payload
+		}
+	}
+	return resp
+}
+
+func NotificationPreferenceToResponse(p *models.NotificationPreference) NotificationPreferenceResponse {
+	return NotificationPreferenceResponse{
+		EmailEnabled: p.EmailEnabled,
+		SmsEnabled:   p.SmsEnabled,
+		PushEnabled:  p.PushEnabled,
+		InAppEnabled: p.InAppEnabled,
+	}
+}
+
+// Installation marketplace
+type InstallationJobTypeResponse struct {
+	ID               uuid.UUID `json:"id"`
+	Code             string    `json:"code"`
+	Name             string    `json:"name"`
+	Description      string    `json:"description"`
+	BaseLaborMinutes int       `json:"base_labor_minutes"`
+	BaseLaborPrice   float64   `json:"base_labor_price"`
+}
+
+func InstallationJobTypeToResponse(j *models.InstallationJobType) InstallationJobTypeResponse {
+	return InstallationJobTypeResponse{
+		ID:               j.ID,
+		Code:             j.Code,
+		Name:             j.Name,
+		Description:      j.Description,
+		BaseLaborMinutes: j.BaseLaborMinutes,
+		BaseLaborPrice:   j.BaseLaborPrice,
+	}
+}
+
+type CreateInstallationQuoteRequest struct {
+	OrderID           *uuid.UUID  `json:"order_id"`
+	ProductIDs        []uuid.UUID `json:"product_ids"`
+	VehicleMake       string      `json:"vehicle_make" binding:"required,max=100"`
+	VehicleModel      string      `json:"vehicle_model" binding:"required,max=100"`
+	VehicleYear       int         `json:"vehicle_year" binding:"required,gte=1900,lte=2100"`
+	ServiceStreet     string      `json:"service_street" binding:"max=200"`
+	ServiceCity       string      `json:"service_city" binding:"required,max=100"`
+	ServiceState      string      `json:"service_state" binding:"required,max=100"`
+	ServicePostalCode string      `json:"service_postal_code" binding:"required,max=20"`
+	ServiceCountry    string      `json:"service_country" binding:"omitempty,max=100"`
+	Latitude          *float64    `json:"latitude" binding:"required"`
+	Longitude         *float64    `json:"longitude" binding:"required"`
+	Notes             string      `json:"notes" binding:"max=2000"`
+	SearchRadiusKm    float64     `json:"search_radius_km" binding:"omitempty,gte=1,lte=200"`
+}
+
+type InstallationQuoteLineResponse struct {
+	ID                uuid.UUID `json:"id"`
+	MechanicProfileID uuid.UUID `json:"mechanic_profile_id"`
+	MechanicName      string    `json:"mechanic_name"`
+	JobTypeID         uuid.UUID `json:"job_type_id"`
+	JobTypeName       string    `json:"job_type_name"`
+	LaborPrice        float64   `json:"labor_price"`
+	EstimatedHours    float64   `json:"estimated_hours"`
+	MechanicMessage   string    `json:"mechanic_message"`
+	DistanceKm        float64   `json:"distance_km"`
+	Status            string    `json:"status"`
+	RatingAvg         float64   `json:"rating_avg,omitempty"`
+}
+
+type InstallationQuoteResponse struct {
+	ID                uuid.UUID                       `json:"id"`
+	Status            string                          `json:"status"`
+	VehicleMake       string                          `json:"vehicle_make"`
+	VehicleModel      string                          `json:"vehicle_model"`
+	VehicleYear       int                             `json:"vehicle_year"`
+	ServiceStreet     string                          `json:"service_street"`
+	ServiceCity       string                          `json:"service_city"`
+	ServiceState      string                          `json:"service_state"`
+	ServicePostalCode string                          `json:"service_postal_code"`
+	ServiceCountry    string                          `json:"service_country"`
+	Latitude          *float64                        `json:"latitude,omitempty"`
+	Longitude         *float64                        `json:"longitude,omitempty"`
+	Notes             string                          `json:"notes"`
+	ExpiresAt         time.Time                       `json:"expires_at"`
+	Lines             []InstallationQuoteLineResponse   `json:"lines"`
+	CreatedAt         time.Time                       `json:"created_at"`
+}
+
+func InstallationQuoteToResponse(q *models.InstallationQuote) InstallationQuoteResponse {
+	resp := InstallationQuoteResponse{
+		ID:                q.ID,
+		Status:            string(q.Status),
+		VehicleMake:       q.VehicleMake,
+		VehicleModel:      q.VehicleModel,
+		VehicleYear:       q.VehicleYear,
+		ServiceStreet:     q.ServiceStreet,
+		ServiceCity:       q.ServiceCity,
+		ServiceState:      q.ServiceState,
+		ServicePostalCode: q.ServicePostalCode,
+		ServiceCountry:    q.ServiceCountry,
+		Latitude:          q.Latitude,
+		Longitude:         q.Longitude,
+		Notes:             q.Notes,
+		ExpiresAt:         q.ExpiresAt,
+		CreatedAt:         q.CreatedAt,
+	}
+	if len(q.Lines) > 0 {
+		resp.Lines = make([]InstallationQuoteLineResponse, len(q.Lines))
+		for i, line := range q.Lines {
+			name := ""
+			rating := 0.0
+			if line.MechanicProfile.ID != uuid.Nil {
+				name = line.MechanicProfile.BusinessName
+				rating = line.MechanicProfile.RatingAvg
+			}
+			jobName := ""
+			if line.JobType.ID != uuid.Nil {
+				jobName = line.JobType.Name
+			}
+			resp.Lines[i] = InstallationQuoteLineResponse{
+				ID:                line.ID,
+				MechanicProfileID: line.MechanicProfileID,
+				MechanicName:      name,
+				JobTypeID:         line.JobTypeID,
+				JobTypeName:       jobName,
+				LaborPrice:        line.LaborPrice,
+				EstimatedHours:    line.EstimatedHours,
+				MechanicMessage:   line.MechanicMessage,
+				DistanceKm:        line.DistanceKm,
+				Status:            string(line.Status),
+				RatingAvg:         rating,
+			}
+		}
+	}
+	return resp
+}
+
+type CreateInstallationBookingRequest struct {
+	QuoteID     uuid.UUID `json:"quote_id" binding:"required"`
+	QuoteLineID uuid.UUID `json:"quote_line_id" binding:"required"`
+	ScheduledAt time.Time `json:"scheduled_at" binding:"required"`
+}
+
+type CancelInstallationBookingRequest struct {
+	Reason string `json:"reason" binding:"max=500"`
+}
+
+type InstallationBookingResponse struct {
+	ID                uuid.UUID  `json:"id"`
+	QuoteID           uuid.UUID  `json:"quote_id"`
+	Status            string     `json:"status"`
+	ScheduledAt       time.Time  `json:"scheduled_at"`
+	MechanicProfileID uuid.UUID  `json:"mechanic_profile_id"`
+	MechanicName      string     `json:"mechanic_name"`
+	ServiceStreet     string     `json:"service_street"`
+	ServiceCity       string     `json:"service_city"`
+	ServiceState      string     `json:"service_state"`
+	ServicePostalCode string     `json:"service_postal_code"`
+	LaborTotal        float64    `json:"labor_total"`
+	PartsTotal        float64    `json:"parts_total"`
+	PlatformFee       float64    `json:"platform_fee"`
+	TotalAmount       float64    `json:"total_amount"`
+	PaymentStatus     string     `json:"payment_status"`
+	CreatedAt         time.Time  `json:"created_at"`
+}
+
+func InstallationBookingToResponse(b *models.InstallationBooking) InstallationBookingResponse {
+	name := ""
+	if b.MechanicProfile.ID != uuid.Nil {
+		name = b.MechanicProfile.BusinessName
+	}
+	return InstallationBookingResponse{
+		ID:                b.ID,
+		QuoteID:           b.QuoteID,
+		Status:            string(b.Status),
+		ScheduledAt:       b.ScheduledAt,
+		MechanicProfileID: b.MechanicProfileID,
+		MechanicName:      name,
+		ServiceStreet:     b.ServiceStreet,
+		ServiceCity:       b.ServiceCity,
+		ServiceState:      b.ServiceState,
+		ServicePostalCode: b.ServicePostalCode,
+		LaborTotal:        b.LaborTotal,
+		PartsTotal:        b.PartsTotal,
+		PlatformFee:       b.PlatformFee,
+		TotalAmount:       b.TotalAmount,
+		PaymentStatus:     string(b.PaymentStatus),
+		CreatedAt:         b.CreatedAt,
+	}
+}
+
+type RespondInstallationQuoteLineRequest struct {
+	LaborPrice      *float64 `json:"labor_price" binding:"omitempty,gte=0"`
+	EstimatedHours  *float64 `json:"estimated_hours" binding:"omitempty,gte=0.25,lte=24"`
+	MechanicMessage *string  `json:"mechanic_message" binding:"omitempty,max=1000"`
+}
+
+type UpdateInstallationBookingStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=confirmed en_route in_progress completed cancelled"`
+}
+
+type MechanicInstallServicesRequest struct {
+	JobTypeIDs []uuid.UUID `json:"job_type_ids" binding:"required,min=1,dive"`
+}

@@ -1,10 +1,16 @@
-.PHONY: build run test migrate docker-up docker-down swagger
+.PHONY: build build-worker run run-worker test migrate docker-up docker-down swagger
 
 build:
 	go build -o bin/api ./cmd/api
 
+build-worker:
+	go build -o bin/worker ./cmd/worker
+
 run:
 	go run ./cmd/api
+
+run-worker:
+	go run ./cmd/worker
 
 air:
 	air

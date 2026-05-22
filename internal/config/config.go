@@ -20,7 +20,19 @@ type Config struct {
 	Email      EmailConfig
 	Upload     UploadConfig
 	Pagination PaginationConfig
-	S3         S3Config
+	S3            S3Config
+	App           AppConfig
+	Notifications NotificationsConfig
+}
+
+type AppConfig struct {
+	FrontendURL string // deep links in emails (e.g. http://localhost:3000)
+}
+
+type NotificationsConfig struct {
+	WorkerEnabled    bool
+	MaxRetries       int
+	DequeueTimeoutSec int
 }
 
 type ServerConfig struct {
@@ -153,6 +165,14 @@ func Load() (*Config, error) {
 			SecretKey: getEnv("S3_SECRET_KEY", ""),
 			Endpoint:  getEnv("S3_ENDPOINT", ""),
 			PublicURL: getEnv("S3_PUBLIC_URL", ""),
+		},
+		App: AppConfig{
+			FrontendURL: strings.TrimRight(getEnv("APP_FRONTEND_URL", "http://localhost:3000"), "/"),
+		},
+		Notifications: NotificationsConfig{
+			WorkerEnabled:     getEnv("NOTIFICATIONS_WORKER_ENABLED", "true") == "true",
+			MaxRetries:        getEnvInt("NOTIFICATIONS_MAX_RETRIES", 5),
+			DequeueTimeoutSec: getEnvInt("NOTIFICATIONS_DEQUEUE_TIMEOUT_SEC", 5),
 		},
 	}
 

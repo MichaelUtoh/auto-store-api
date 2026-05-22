@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"auto-store-api/internal/repositories"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -56,16 +58,22 @@ type MechanicUpdateProfileInput struct {
 
 type MechanicService struct {
 	mechanicRepo *repositories.MechanicRepository
+	installRepo  *repositories.InstallationRepository
 	userRepo     *repositories.UserRepository
+	notifier     *Notifier
+	log          *zap.Logger
 	db           *gorm.DB
 }
 
 func NewMechanicService(
 	mechanicRepo *repositories.MechanicRepository,
+	installRepo *repositories.InstallationRepository,
 	userRepo *repositories.UserRepository,
+	notifier *Notifier,
+	log *zap.Logger,
 	db *gorm.DB,
 ) *MechanicService {
-	return &MechanicService{mechanicRepo: mechanicRepo, userRepo: userRepo, db: db}
+	return &MechanicService{mechanicRepo: mechanicRepo, installRepo: installRepo, userRepo: userRepo, notifier: notifier, log: log, db: db}
 }
 
 func (s *MechanicService) Apply(userID uuid.UUID, input MechanicApplyInput) (*models.MechanicProfile, error) {
@@ -117,7 +125,12 @@ func (s *MechanicService) Apply(userID uuid.UUID, input MechanicApplyInput) (*mo
 	if err != nil {
 		return nil, err
 	}
-	return s.mechanicRepo.GetProfileByUserID(userID)
+	loaded, err := s.mechanicRepo.GetProfileByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	s.emitApplyReceived(loaded)
+	return loaded, nil
 }
 
 func (s *MechanicService) GetProfileByUserID(userID uuid.UUID) (*models.MechanicProfile, error) {
@@ -212,13 +225,40 @@ func (s *MechanicService) ListForAdmin(status *models.MechanicProfileStatus, pag
 }
 
 func (s *MechanicService) Verify(userID uuid.UUID) (*models.MechanicProfile, error) {
-	return s.setAdminStatus(userID, models.MechanicStatusVerified, func(profile *models.MechanicProfile, user *models.User) {
+	profile, err := s.setAdminStatus(userID, models.MechanicStatusVerified, func(profile *models.MechanicProfile, user *models.User) {
 		now := time.Now()
 		profile.VerifiedAt = &now
 		profile.SuspendedAt = nil
 		profile.RejectionReason = ""
 		user.Role = models.RoleMechanic
 	})
+	if err != nil {
+		return nil, err
+	}
+	s.emitVerified(profile)
+	s.seedInstallServices(profile)
+	return profile, nil
+}
+
+func (s *MechanicService) seedInstallServices(profile *models.MechanicProfile) {
+	if s.installRepo == nil || profile == nil {
+		return
+	}
+	jobTypes, err := s.installRepo.ListJobTypes(true)
+	if err != nil {
+		s.log.Warn("failed to list job types for mechanic seed", zap.Error(err))
+		return
+	}
+	for _, jt := range jobTypes {
+		if err := s.installRepo.UpsertInstallService(&models.MechanicInstallService{
+			MechanicProfileID: profile.ID,
+			JobTypeID:         jt.ID,
+			LaborPrice:        jt.BaseLaborPrice,
+			IsActive:          true,
+		}); err != nil {
+			s.log.Warn("failed to seed mechanic install service", zap.Error(err), zap.String("job_type", jt.Code))
+		}
+	}
 }
 
 func (s *MechanicService) Suspend(userID uuid.UUID, reason string) (*models.MechanicProfile, error) {
@@ -313,5 +353,23 @@ func isValidDocumentType(t models.MechanicDocumentType) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func (s *MechanicService) emitApplyReceived(profile *models.MechanicProfile) {
+	if s.notifier == nil || profile == nil {
+		return
+	}
+	if err := s.notifier.MechanicApplyReceived(context.Background(), profile.UserID, profile.BusinessName); err != nil {
+		s.log.Warn("failed to send apply received notification", zap.Error(err))
+	}
+}
+
+func (s *MechanicService) emitVerified(profile *models.MechanicProfile) {
+	if s.notifier == nil || profile == nil {
+		return
+	}
+	if err := s.notifier.MechanicVerified(context.Background(), profile.UserID, profile.BusinessName); err != nil {
+		s.log.Warn("failed to send mechanic verified notification", zap.Error(err))
 	}
 }

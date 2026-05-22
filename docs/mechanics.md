@@ -13,7 +13,8 @@ The API distinguishes **who someone is** (user `role`) from **whether they are a
 
 - **Customers** buy parts as today.
 - **Mechanics** are installers vetted through an application and admin approval flow.
-- Future features (installation quotes, Community Q&A answers) will require a **verified** mechanic profile via `RequireVerifiedMechanic` middleware.
+- **Installation marketplace** (quotes, bookings) requires a **verified** mechanic profile via `RequireVerifiedMechanic` middleware. See [installation-marketplace.md](./installation-marketplace.md).
+- Future **Community Q&A** answers will use the same middleware.
 
 ---
 

@@ -80,7 +80,7 @@ func doConnect(dsn string, log *zap.Logger) error {
 
 // AutoMigrate runs GORM AutoMigrate for all models
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Address{},
 		&models.Product{},
@@ -100,5 +100,17 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.EmailVerificationToken{},
 		&models.MechanicProfile{},
 		&models.MechanicDocument{},
-	)
+		&models.Notification{},
+		&models.NotificationPreference{},
+		&models.InstallationJobType{},
+		&models.MechanicInstallService{},
+		&models.InstallationQuote{},
+		&models.InstallationQuoteItem{},
+		&models.InstallationQuoteLine{},
+		&models.InstallationBooking{},
+		&models.BookingPayment{},
+	); err != nil {
+		return err
+	}
+	return SeedInstallationJobTypes(db)
 }

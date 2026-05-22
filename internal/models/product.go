@@ -29,6 +29,8 @@ type Product struct {
 	Dimensions            string            `gorm:"type:varchar(100)" json:"dimensions"`
 	Condition             ProductCondition  `gorm:"type:varchar(20);default:'new'" json:"condition"`
 	WarrantyMonths        int               `gorm:"column:warranty_months" json:"warranty_months"`
+	InstallationEligible  bool              `gorm:"column:installation_eligible;default:false" json:"installation_eligible"`
+	InstallationJobTypeID *uuid.UUID        `gorm:"type:uuid;column:installation_job_type_id" json:"installation_job_type_id,omitempty"`
 	CreatedAt             time.Time         `json:"created_at"`
 	UpdatedAt             time.Time         `json:"updated_at"`
 	DeletedAt             gorm.DeletedAt    `gorm:"index" json:"-"`

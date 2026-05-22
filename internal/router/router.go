@@ -9,6 +9,8 @@ import (
 	"auto-store-api/internal/services"
 	"auto-store-api/internal/validators"
 	"auto-store-api/pkg/auth"
+	"auto-store-api/pkg/cache"
+	"auto-store-api/pkg/email"
 	"auto-store-api/pkg/storage"
 	"net/http"
 
@@ -53,6 +55,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	addressRepo := repositories.NewAddressRepository(db)
 	reviewRepo := repositories.NewReviewRepository(db)
 	mechanicRepo := repositories.NewMechanicRepository(db)
+	installRepo := repositories.NewInstallationRepository(db)
+	notifRepo := repositories.NewNotificationRepository(db)
 
 	authSvc := services.NewAuthService(userRepo, jwt, services.AuthConfig{
 		LockoutAttempts: cfg.RateLimit.LockoutAttempts,
@@ -65,7 +69,11 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	userSvc := services.NewUserService(userRepo, addressRepo, db)
 	wishlistSvc := services.NewWishlistService(wishlistRepo, db)
 	reviewSvc := services.NewReviewService(reviewRepo, orderRepo, productRepo, db)
-	mechanicSvc := services.NewMechanicService(mechanicRepo, userRepo, db)
+	emailSender := email.NewSender(cfg.Email)
+	notifSvc := services.NewNotificationService(notifRepo, userRepo, cache.Client, emailSender, cfg, log)
+	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL)
+	mechanicSvc := services.NewMechanicService(mechanicRepo, installRepo, userRepo, notifier, log, db)
+	installSvc := services.NewInstallationService(installRepo, orderRepo, productRepo, mechanicRepo, notifier, log, db)
 
 	authH := handlers.NewAuthHandler(authSvc)
 	productH := handlers.NewProductHandler(productSvc)
@@ -76,6 +84,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	wishlistH := handlers.NewWishlistHandler(wishlistSvc)
 	reviewH := handlers.NewReviewHandler(reviewSvc)
 	mechanicH := handlers.NewMechanicHandler(mechanicSvc)
+	installH := handlers.NewInstallationHandler(installSvc)
+	notifH := handlers.NewNotificationHandler(notifSvc)
 
 	var store storage.Storage
 	if s3Store, err := storage.NewS3(storage.S3Config{
@@ -115,6 +125,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		api.GET("/categories/:id/products", categoryH.GetProducts)
 		api.GET("/mechanics", mechanicH.ListVerified)
 		api.GET("/mechanics/:id", mechanicH.GetPublicProfile)
+		api.GET("/installation/job-types", installH.ListJobTypes)
 
 		protected := api.Group("")
 		protected.Use(middleware.AuthRequired(jwt, db))
@@ -139,6 +150,23 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.GET("/wishlist", wishlistH.Get)
 			protected.POST("/wishlist", wishlistH.Add)
 			protected.DELETE("/wishlist/:productId", wishlistH.Remove)
+			protected.GET("/notifications", notifH.List)
+			protected.GET("/notifications/unread-count", notifH.UnreadCount)
+			protected.PATCH("/notifications/:id/read", notifH.MarkRead)
+			protected.PATCH("/notifications/read-all", notifH.MarkAllRead)
+			protected.GET("/users/me/notification-preferences", notifH.GetPreferences)
+			protected.PUT("/users/me/notification-preferences", notifH.UpdatePreferences)
+
+			installRoutes := protected.Group("/installation")
+			{
+				installRoutes.POST("/quotes", installH.CreateQuote)
+				installRoutes.GET("/quotes", installH.ListQuotes)
+				installRoutes.GET("/quotes/:id", installH.GetQuote)
+				installRoutes.POST("/bookings", installH.CreateBooking)
+				installRoutes.GET("/bookings", installH.ListBookings)
+				installRoutes.GET("/bookings/:id", installH.GetBooking)
+				installRoutes.PATCH("/bookings/:id/cancel", installH.CancelBooking)
+			}
 
 			mechanicRoutes := protected.Group("/mechanic")
 			{
@@ -147,6 +175,17 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 				mechanicRoutes.PUT("/profile", mechanicH.UpdateMyProfile)
 				mechanicRoutes.POST("/documents", mechanicH.AddDocument)
 				mechanicRoutes.DELETE("/documents/:id", mechanicH.RemoveDocument)
+			}
+
+			mechanicVerified := protected.Group("/mechanic")
+			mechanicVerified.Use(middleware.RequireVerifiedMechanic(db))
+			{
+				mechanicVerified.GET("/installation/quotes", installH.ListMechanicQuoteLines)
+				mechanicVerified.PATCH("/installation/quotes/:id", installH.RespondToQuoteLine)
+				mechanicVerified.PUT("/installation/services", installH.SetMechanicInstallServices)
+				mechanicVerified.GET("/installation/bookings", installH.ListMechanicBookings)
+				mechanicVerified.GET("/installation/bookings/:id", installH.GetMechanicBooking)
+				mechanicVerified.PATCH("/installation/bookings/:id/status", installH.UpdateMechanicBookingStatus)
 			}
 		}
 

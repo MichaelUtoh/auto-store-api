@@ -959,6 +959,165 @@ No body required.
 
 ---
 
+## Installation marketplace
+
+See [installation-marketplace.md](./installation-marketplace.md). Products must have `installation_eligible: true` and `installation_job_type_id` set.
+
+### POST /installation/quotes
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+```json
+{
+  "product_ids": ["550e8400-e29b-41d4-a716-446655440010"],
+  "vehicle_make": "Toyota",
+  "vehicle_model": "Camry",
+  "vehicle_year": 2018,
+  "service_street": "123 Main St",
+  "service_city": "San Jose",
+  "service_state": "CA",
+  "service_postal_code": "95112",
+  "latitude": 37.3382,
+  "longitude": -121.8863,
+  "notes": "Front brake pads from recent order",
+  "search_radius_km": 50
+}
+```
+
+Alternatively pass `"order_id": "<uuid>"` instead of `product_ids`.
+
+**Response (201):** quote with `lines[]` (per-mechanic labor estimates, `distance_km`, expires in 24h).
+
+### POST /installation/bookings
+
+```json
+{
+  "quote_id": "660e8400-e29b-41d4-a716-446655440100",
+  "quote_line_id": "770e8400-e29b-41d4-a716-446655440101",
+  "scheduled_at": "2026-05-25T14:00:00Z"
+}
+```
+
+**Response (201):** booking with `status`: `pending_payment`, totals (`labor_total`, `parts_total`, `platform_fee`, `total_amount`). Paystack checkout is not wired yet — payment stays `pending` until integrated.
+
+### PATCH /mechanic/installation/bookings/:id/status (verified mechanic)
+
+```json
+{ "status": "en_route" }
+```
+
+Valid: `confirmed`, `en_route`, `in_progress`, `completed`, `cancelled`.
+
+---
+
+## Notifications
+
+In-app feed for the Next.js bell + async email via worker. See [notifications.md](./notifications.md).
+
+### GET /notifications
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Query (optional):**
+```
+?page=1&limit=20&unread_only=true
+```
+
+Returns **in-app** channel only.
+
+**Response (paginated):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440030",
+      "type": "mechanic.verified",
+      "channel": "in_app",
+      "title": "Mechanic profile verified",
+      "body": "Your mechanic profile for Bay Area Brakes is now verified...",
+      "payload": {
+        "href": "/mechanic/profile"
+      },
+      "read_at": null,
+      "created_at": "2026-05-21T10:00:00Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 1, "total_pages": 1 }
+}
+```
+
+Use `payload.href` with Next.js `<Link href={...}>`.
+
+---
+
+### GET /notifications/unread-count
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": { "count": 3 }
+}
+```
+
+---
+
+### PATCH /notifications/:id/read
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Path:** `id` = notification UUID
+
+**Response:** `204`
+
+---
+
+### PATCH /notifications/read-all
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response:** `204`
+
+---
+
+### GET /users/me/notification-preferences
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "email_enabled": true,
+    "sms_enabled": false,
+    "push_enabled": false,
+    "in_app_enabled": true
+  }
+}
+```
+
+---
+
+### PUT /users/me/notification-preferences
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request body (all optional):**
+```json
+{
+  "email_enabled": true,
+  "sms_enabled": false,
+  "push_enabled": false,
+  "in_app_enabled": true
+}
+```
+
+---
+
 ## Reviews
 
 ### GET /products/:id/reviews
