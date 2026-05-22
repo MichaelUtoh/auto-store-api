@@ -333,6 +333,17 @@ type MechanicDocumentRequest struct {
 	FileName     string `json:"file_name" binding:"max=255"`
 }
 
+type MechanicPayoutSetupRequest struct {
+	BankCode      string `json:"bank_code" binding:"required"`
+	AccountNumber string `json:"account_number" binding:"required,min=10,max=20"`
+}
+
+type RefundRequest struct {
+	Amount       *float64 `json:"amount"`
+	CustomerNote string   `json:"customer_note" binding:"max=500"`
+	MerchantNote string   `json:"merchant_note" binding:"max=500"`
+}
+
 type MechanicAdminActionRequest struct {
 	Reason string `json:"reason"`
 }

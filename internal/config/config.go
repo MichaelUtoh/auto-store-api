@@ -23,6 +23,20 @@ type Config struct {
 	S3            S3Config
 	App           AppConfig
 	Notifications NotificationsConfig
+	Paystack      PaystackConfig
+}
+
+// PaystackConfig holds Paystack payment provider settings.
+type PaystackConfig struct {
+	SecretKey               string
+	PublicKey               string
+	WebhookSecret           string
+	CallbackURL             string
+	Currency                string // ISO 4217, e.g. NGN
+	BankCountry             string // paystack /bank query: nigeria, ghana, kenya, south africa
+	Enabled                 bool
+	SplitEnabled            bool // use subaccount split on installation bookings
+	RequireSplitForBookings bool // booking checkout fails if mechanic has no subaccount
 }
 
 type AppConfig struct {
@@ -174,6 +188,22 @@ func Load() (*Config, error) {
 			MaxRetries:        getEnvInt("NOTIFICATIONS_MAX_RETRIES", 5),
 			DequeueTimeoutSec: getEnvInt("NOTIFICATIONS_DEQUEUE_TIMEOUT_SEC", 5),
 		},
+		Paystack: func() PaystackConfig {
+			secret := getEnv("PAYSTACK_SECRET_KEY", "")
+			currency := strings.ToUpper(getEnv("PAYSTACK_CURRENCY", "NGN"))
+			split := getEnv("PAYSTACK_SPLIT_ENABLED", "true") == "true"
+			return PaystackConfig{
+				SecretKey:               secret,
+				PublicKey:               getEnv("PAYSTACK_PUBLIC_KEY", ""),
+				WebhookSecret:           getEnv("PAYSTACK_WEBHOOK_SECRET", ""),
+				CallbackURL:             getEnv("PAYSTACK_CALLBACK_URL", ""),
+				Currency:                currency,
+				BankCountry:             paystackBankCountry(getEnv("PAYSTACK_BANK_COUNTRY", ""), currency),
+				Enabled:                 secret != "",
+				SplitEnabled:            split,
+				RequireSplitForBookings: getEnv("PAYSTACK_REQUIRE_SPLIT_BOOKINGS", "true") == "true",
+			}
+		}(),
 	}
 
 	cfg.Database.DSN = "host=" + cfg.Database.Host + " port=" + cfg.Database.Port +
@@ -222,4 +252,20 @@ func getEnvSlice(key string, defaultVal []string) []string {
 		return strings.Split(strings.TrimSpace(v), ",")
 	}
 	return defaultVal
+}
+
+func paystackBankCountry(explicit, currency string) string {
+	if explicit != "" {
+		return strings.ToLower(strings.TrimSpace(explicit))
+	}
+	switch currency {
+	case "GHS":
+		return "ghana"
+	case "KES":
+		return "kenya"
+	case "ZAR":
+		return "south africa"
+	default:
+		return "nigeria"
+	}
 }

@@ -205,6 +205,14 @@ func (r *InstallationRepository) CreateBookingPayment(p *models.BookingPayment) 
 	return r.db.Create(p).Error
 }
 
+func (r *InstallationRepository) GetBookingByPaymentReference(ref string) (*models.InstallationBooking, error) {
+	var payment models.BookingPayment
+	if err := r.db.First(&payment, "payment_intent_id = ?", ref).Error; err != nil {
+		return nil, err
+	}
+	return r.GetBookingByID(payment.BookingID)
+}
+
 func (r *InstallationRepository) GetBookingByID(id uuid.UUID) (*models.InstallationBooking, error) {
 	var booking models.InstallationBooking
 	err := r.db.Preload("MechanicProfile").

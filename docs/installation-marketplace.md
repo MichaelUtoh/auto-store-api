@@ -84,22 +84,21 @@ Mark products as installable:
 
 ---
 
-## Payments (planned — Paystack)
+## Payments (Paystack)
 
-Not implemented yet. Bookings use `payment_status: pending` and `booking_payments.provider: manual`.
+Implemented for installation bookings. See [payments.md](./payments.md).
 
-When added, expect:
+- `POST /api/v1/installation/bookings/:id/pay` — initialize checkout
+- `GET /api/v1/payments/verify?reference=...` — confirm after redirect
+- `POST /webhooks/paystack` — `charge.success` webhook
 
-- **Paystack** Initialize Transaction / Verify for customer labor + parts checkout
-- Webhook (`charge.success`) to confirm booking and set `payment_status: paid`
-- Optional **Paystack Subaccounts** or split rules for mechanic payouts (marketplace)
-- Env: `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_WEBHOOK_SECRET` (see `.env.example`)
+Mechanics can still mark bookings `confirmed` manually when payment was collected off-platform.
 
-Until then, mechanics can mark bookings `confirmed` after off-platform payment if you allow that in ops.
+## Mechanic payouts
+
+Paystack subaccount split on booking checkout. See [mechanic-payouts.md](./mechanic-payouts.md).
 
 ## Not yet implemented
-
-- Paystack checkout + webhooks + mechanic payouts
 - Calendar / availability slots
 - PostGIS (uses haversine on lat/lng)
 - Admin dispute workflow

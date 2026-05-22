@@ -82,7 +82,21 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 | POST | `/api/v1/orders` | Yes | Create order (body: shipping_address_id, billing_address_id, payment_method). |
 | GET | `/api/v1/orders` | Yes | List current user's orders (paginated). |
 | GET | `/api/v1/orders/:id` | Yes | Get order by ID. |
+| POST | `/api/v1/orders/:id/pay` | Yes | Initialize Paystack checkout (see [payments.md](./payments.md)). |
+| POST | `/api/v1/orders/:id/refund` | Yes | Refund paid Paystack order. |
 | PUT | `/api/v1/orders/:id/cancel` | Yes | Cancel order. |
+
+---
+
+## Payments
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/payments/verify` | Yes | Verify Paystack transaction (`?reference=`). |
+| GET | `/api/v1/payments/banks` | Yes | List banks for mechanic payout setup. |
+| POST | `/webhooks/paystack` | No | Paystack webhook (`x-paystack-signature`). |
+
+See [payments.md](./payments.md).
 
 ---
 
@@ -108,6 +122,8 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 | POST | `/api/v1/mechanic/apply` | Yes | Submit mechanic application (creates profile with status `pending`). |
 | GET | `/api/v1/mechanic/profile` | Yes | Get current user's mechanic profile (includes documents). |
 | PUT | `/api/v1/mechanic/profile` | Yes | Update own profile (allowed when status is `pending` or `verified`). |
+| GET | `/api/v1/mechanic/payout` | Yes | Paystack subaccount / payout status. |
+| POST | `/api/v1/mechanic/payout` | Yes | Register or update bank account for split payouts. |
 | POST | `/api/v1/mechanic/documents` | Yes | Add verification document (body: document_type, url, file_name). |
 | DELETE | `/api/v1/mechanic/documents/:id` | Yes | Remove a document from own profile. |
 
@@ -140,7 +156,9 @@ See [installation-marketplace.md](./installation-marketplace.md).
 | POST | `/api/v1/installation/bookings` | Yes | Book selected line + time |
 | GET | `/api/v1/installation/bookings` | Yes | List own bookings |
 | GET | `/api/v1/installation/bookings/:id` | Yes | Booking detail |
-| PATCH | `/api/v1/installation/bookings/:id/cancel` | Yes | Cancel booking |
+| POST | `/api/v1/installation/bookings/:id/pay` | Yes | Initialize Paystack checkout |
+| POST | `/api/v1/installation/bookings/:id/refund` | Yes | Refund paid Paystack booking |
+| PATCH | `/api/v1/installation/bookings/:id/cancel` | Yes | Cancel booking (auto-refunds if paid via Paystack) |
 
 ---
 
@@ -214,6 +232,8 @@ See [community-qa.md](./community-qa.md).
 |--------|------|------|-------------|
 | GET | `/api/v1/admin/orders` | Admin | List all orders (query: page, limit, status). |
 | PUT | `/api/v1/admin/orders/:id/status` | Admin | Update order status (body: status). |
+| POST | `/api/v1/admin/orders/:id/refund` | Admin | Refund paid Paystack order. |
+| POST | `/api/v1/admin/installation/bookings/:id/refund` | Admin | Refund paid Paystack booking. |
 | PUT | `/api/v1/admin/users/:id/role` | Admin | Update user role (body: role — ADMIN, VENDOR, CUSTOMER, MECHANIC). |
 | GET | `/api/v1/admin/mechanics` | Admin | List mechanic profiles (query: status, page, limit). |
 | PUT | `/api/v1/admin/mechanics/:userId/verify` | Admin | Verify mechanic; sets role to MECHANIC. |

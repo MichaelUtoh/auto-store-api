@@ -231,6 +231,7 @@ type BookingPayment struct {
 	BookingID       uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex" json:"booking_id"`
 	Provider        string        `gorm:"not null;default:'manual'" json:"provider"` // manual | paystack
 	PaymentIntentID string        `gorm:"column:payment_intent_id" json:"payment_intent_id"` // Paystack reference when integrated
+	PaystackRefundID string       `gorm:"column:paystack_refund_id" json:"paystack_refund_id,omitempty"`
 	Amount          float64       `gorm:"type:decimal(12,2);not null" json:"amount"`
 	Status          PaymentStatus `gorm:"type:varchar(20);not null;default:'pending'" json:"status"`
 	CreatedAt       time.Time     `json:"created_at"`

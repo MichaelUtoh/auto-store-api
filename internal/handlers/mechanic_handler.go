@@ -17,10 +17,11 @@ import (
 
 type MechanicHandler struct {
 	mechanic *services.MechanicService
+	payouts  *services.MechanicPayoutService
 }
 
-func NewMechanicHandler(mechanic *services.MechanicService) *MechanicHandler {
-	return &MechanicHandler{mechanic: mechanic}
+func NewMechanicHandler(mechanic *services.MechanicService, payouts *services.MechanicPayoutService) *MechanicHandler {
+	return &MechanicHandler{mechanic: mechanic, payouts: payouts}
 }
 
 // Apply godoc
@@ -376,6 +377,68 @@ func (h *MechanicHandler) Reject(c *gin.Context) {
 		return
 	}
 	utils.JSON(c, http.StatusOK, dto.MechanicProfileToResponse(profile))
+}
+
+// GetPayoutStatus godoc
+// @Summary Get Paystack payout / subaccount status
+// @Tags mechanics
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} services.MechanicPayoutStatus
+// @Router /api/v1/mechanic/payout [get]
+func (h *MechanicHandler) GetPayoutStatus(c *gin.Context) {
+	userID, ok := GetUserID(c)
+	if !ok {
+		utils.JSONUnauthorized(c, "unauthorized")
+		return
+	}
+	status, err := h.payouts.GetStatus(userID)
+	if err != nil {
+		if errors.Is(err, services.ErrMechanicProfileNotFound) {
+			utils.JSONNotFound(c, err.Error())
+			return
+		}
+		utils.JSONInternal(c, err.Error())
+		return
+	}
+	utils.JSON(c, http.StatusOK, status)
+}
+
+// SetupPayout godoc
+// @Summary Register or update mechanic bank account for Paystack split payouts
+// @Tags mechanics
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body dto.MechanicPayoutSetupRequest true "Bank details"
+// @Success 200 {object} services.MechanicPayoutStatus
+// @Router /api/v1/mechanic/payout [post]
+func (h *MechanicHandler) SetupPayout(c *gin.Context) {
+	userID, ok := GetUserID(c)
+	if !ok {
+		utils.JSONUnauthorized(c, "unauthorized")
+		return
+	}
+	var req dto.MechanicPayoutSetupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.JSONBadRequest(c, err.Error())
+		return
+	}
+	status, err := h.payouts.Setup(userID, req.BankCode, req.AccountNumber)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrPaystackNotConfigured):
+			utils.JSON(c, http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrMechanicProfileNotFound):
+			utils.JSONNotFound(c, err.Error())
+		case errors.Is(err, services.ErrMechanicPayoutInvalidBank):
+			utils.JSONBadRequest(c, err.Error())
+		default:
+			utils.JSONBadRequest(c, err.Error())
+		}
+		return
+	}
+	utils.JSON(c, http.StatusOK, status)
 }
 
 func toMechanicDocumentInputs(docs []dto.MechanicDocumentRequest) []services.MechanicDocumentInput {

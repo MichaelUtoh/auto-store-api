@@ -71,6 +71,7 @@ type InstallationService struct {
 	orderRepo   *repositories.OrderRepository
 	productRepo *repositories.ProductRepository
 	mechanicRepo *repositories.MechanicRepository
+	payments    *PaymentService
 	notifier    *Notifier
 	log         *zap.Logger
 	db          *gorm.DB
@@ -81,18 +82,20 @@ func NewInstallationService(
 	orderRepo *repositories.OrderRepository,
 	productRepo *repositories.ProductRepository,
 	mechanicRepo *repositories.MechanicRepository,
+	payments *PaymentService,
 	notifier *Notifier,
 	log *zap.Logger,
 	db *gorm.DB,
 ) *InstallationService {
 	return &InstallationService{
-		installRepo: installRepo,
-		orderRepo:   orderRepo,
-		productRepo: productRepo,
+		installRepo:  installRepo,
+		orderRepo:    orderRepo,
+		productRepo:  productRepo,
 		mechanicRepo: mechanicRepo,
-		notifier:    notifier,
-		log:         log,
-		db:          db,
+		payments:     payments,
+		notifier:     notifier,
+		log:          log,
+		db:           db,
 	}
 }
 
@@ -453,9 +456,27 @@ func (s *InstallationService) CancelBooking(userID, bookingID uuid.UUID, reason 
 	if booking.Status == models.BookingStatusCompleted || booking.Status == models.BookingStatusCancelled {
 		return nil, ErrBookingNotCancellable
 	}
+
+	if booking.PaymentStatus == models.PaymentPaid && s.payments != nil {
+		if err := s.payments.RefundBookingOnCancel(booking, reason); err != nil {
+			if !errors.Is(err, ErrPaymentNotRefundable) {
+				return nil, err
+			}
+		} else {
+			booking, err = s.installRepo.GetBookingByID(bookingID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	booking.Status = models.BookingStatusCancelled
 	booking.CancellationReason = reason
-	booking.PaymentStatus = models.PaymentRefunded
+	if booking.PaymentStatus == models.PaymentPaid {
+		booking.PaymentStatus = models.PaymentRefunded
+		_ = s.db.Model(&models.BookingPayment{}).Where("booking_id = ?", bookingID).
+			Update("status", models.PaymentRefunded).Error
+	}
 	if err := s.installRepo.UpdateBooking(booking); err != nil {
 		return nil, err
 	}

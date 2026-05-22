@@ -40,6 +40,8 @@ type Order struct {
 	BillingAddressID   uuid.UUID      `gorm:"type:uuid;column:billing_address_id" json:"billing_address_id"`
 	PaymentMethod      string         `gorm:"column:payment_method" json:"payment_method"`
 	PaymentStatus      PaymentStatus  `gorm:"column:payment_status;type:varchar(20);default:'pending'" json:"payment_status"`
+	PaymentReference   string         `gorm:"column:payment_reference;index" json:"payment_reference,omitempty"`
+	PaystackRefundID   string         `gorm:"column:paystack_refund_id" json:"paystack_refund_id,omitempty"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`

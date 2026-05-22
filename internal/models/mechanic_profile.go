@@ -64,6 +64,12 @@ type MechanicProfile struct {
 	VerifiedAt      *time.Time            `gorm:"column:verified_at" json:"verified_at,omitempty"`
 	SuspendedAt     *time.Time            `gorm:"column:suspended_at" json:"suspended_at,omitempty"`
 	RejectionReason string                `gorm:"column:rejection_reason;type:text" json:"rejection_reason,omitempty"`
+	// Paystack subaccount for installation booking payouts (split payments).
+	PaystackSubaccountCode string     `gorm:"column:paystack_subaccount_code" json:"paystack_subaccount_code,omitempty"`
+	PaystackBankCode       string     `gorm:"column:paystack_bank_code" json:"-"`
+	PaystackAccountNumber  string     `gorm:"column:paystack_account_number" json:"-"`
+	PaystackAccountName    string     `gorm:"column:paystack_account_name" json:"paystack_account_name,omitempty"`
+	PayoutConfiguredAt     *time.Time `gorm:"column:payout_configured_at" json:"payout_configured_at,omitempty"`
 	CreatedAt       time.Time             `json:"created_at"`
 	UpdatedAt       time.Time             `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt        `gorm:"index" json:"-"`

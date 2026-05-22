@@ -75,7 +75,9 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	notifSvc := services.NewNotificationService(notifRepo, userRepo, cache.Client, emailSender, cfg, log)
 	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL)
 	mechanicSvc := services.NewMechanicService(mechanicRepo, installRepo, userRepo, notifier, log, db)
-	installSvc := services.NewInstallationService(installRepo, orderRepo, productRepo, mechanicRepo, notifier, log, db)
+	payoutSvc := services.NewMechanicPayoutService(cfg.Paystack, mechanicRepo, userRepo, log)
+	paymentSvc := services.NewPaymentService(cfg.Paystack, orderRepo, installRepo, mechanicRepo, userRepo, db, log)
+	installSvc := services.NewInstallationService(installRepo, orderRepo, productRepo, mechanicRepo, paymentSvc, notifier, log, db)
 	questionSvc := services.NewQuestionService(questionRepo, productRepo, categoryRepo, notifier, db)
 	diagramSvc := services.NewDiagramService(diagramRepo, productRepo, db)
 
@@ -87,8 +89,9 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	userH := handlers.NewUserHandler(userSvc)
 	wishlistH := handlers.NewWishlistHandler(wishlistSvc)
 	reviewH := handlers.NewReviewHandler(reviewSvc)
-	mechanicH := handlers.NewMechanicHandler(mechanicSvc)
+	mechanicH := handlers.NewMechanicHandler(mechanicSvc, payoutSvc)
 	installH := handlers.NewInstallationHandler(installSvc)
+	paymentH := handlers.NewPaymentHandler(paymentSvc, payoutSvc)
 	notifH := handlers.NewNotificationHandler(notifSvc)
 	questionH := handlers.NewQuestionHandler(questionSvc)
 	diagramH := handlers.NewDiagramHandler(diagramSvc)
@@ -160,7 +163,11 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.POST("/orders", orderH.Create)
 			protected.GET("/orders", orderH.List)
 			protected.GET("/orders/:id", orderH.Get)
+			protected.POST("/orders/:id/pay", paymentH.InitializeOrderPayment)
+			protected.POST("/orders/:id/refund", paymentH.RefundOrder)
 			protected.PUT("/orders/:id/cancel", orderH.Cancel)
+			protected.GET("/payments/verify", paymentH.VerifyPayment)
+			protected.GET("/payments/banks", paymentH.ListBanks)
 			protected.GET("/users/me", userH.GetProfile)
 			protected.PUT("/users/me", userH.UpdateProfile)
 			protected.PATCH("/users/me", userH.UpdateProfile)
@@ -186,6 +193,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 				installRoutes.POST("/bookings", installH.CreateBooking)
 				installRoutes.GET("/bookings", installH.ListBookings)
 				installRoutes.GET("/bookings/:id", installH.GetBooking)
+				installRoutes.POST("/bookings/:id/pay", paymentH.InitializeBookingPayment)
+				installRoutes.POST("/bookings/:id/refund", paymentH.RefundBooking)
 				installRoutes.PATCH("/bookings/:id/cancel", installH.CancelBooking)
 			}
 
@@ -196,6 +205,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 				mechanicRoutes.PUT("/profile", mechanicH.UpdateMyProfile)
 				mechanicRoutes.POST("/documents", mechanicH.AddDocument)
 				mechanicRoutes.DELETE("/documents/:id", mechanicH.RemoveDocument)
+				mechanicRoutes.GET("/payout", mechanicH.GetPayoutStatus)
+				mechanicRoutes.POST("/payout", mechanicH.SetupPayout)
 			}
 
 			mechanicVerified := protected.Group("/mechanic")
@@ -238,6 +249,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminOnly.DELETE("/categories/:id", categoryH.Delete)
 			adminOnly.GET("/admin/orders", orderH.ListAll)
 			adminOnly.PUT("/admin/orders/:id/status", orderH.UpdateStatus)
+			adminOnly.POST("/admin/orders/:id/refund", paymentH.AdminRefundOrder)
+			adminOnly.POST("/admin/installation/bookings/:id/refund", paymentH.AdminRefundBooking)
 			adminOnly.PUT("/admin/users/:id/role", userH.UpdateRole)
 			adminOnly.GET("/admin/mechanics", mechanicH.ListAdmin)
 			adminOnly.PUT("/admin/mechanics/:userId/verify", mechanicH.Verify)
@@ -245,6 +258,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminOnly.PUT("/admin/mechanics/:userId/reject", mechanicH.Reject)
 		}
 	}
+
+	r.POST("/webhooks/paystack", paymentH.PaystackWebhook)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})

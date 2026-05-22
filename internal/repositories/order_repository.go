@@ -30,6 +30,15 @@ func (r *OrderRepository) GetByID(id uuid.UUID) (*models.Order, error) {
 	return &o, nil
 }
 
+func (r *OrderRepository) GetByPaymentReference(ref string) (*models.Order, error) {
+	var o models.Order
+	err := r.db.First(&o, "payment_reference = ?", ref).Error
+	if err != nil {
+		return nil, err
+	}
+	return &o, nil
+}
+
 func (r *OrderRepository) GetByOrderNumber(num string) (*models.Order, error) {
 	var o models.Order
 	err := r.db.First(&o, "order_number = ?", num).Error
