@@ -14,7 +14,7 @@ The API distinguishes **who someone is** (user `role`) from **whether they are a
 - **Customers** buy parts as today.
 - **Mechanics** are installers vetted through an application and admin approval flow.
 - **Installation marketplace** (quotes, bookings) requires a **verified** mechanic profile via `RequireVerifiedMechanic` middleware. See [installation-marketplace.md](./installation-marketplace.md).
-- Future **Community Q&A** answers will use the same middleware.
+- **Community Q&A** answers use the same `RequireVerifiedMechanic` middleware. See [community-qa.md](./community-qa.md).
 
 ---
 
@@ -153,7 +153,7 @@ Auth middleware preloads `MechanicProfile` on authenticated requests so this is 
 1. `user.role == MECHANIC`
 2. A `mechanic_profiles` row for the user with `status == verified`
 
-Use this on routes such as answering Q&A or accepting installation jobs. Example (not wired yet):
+Use this on routes such as answering Q&A or accepting installation jobs:
 
 ```go
 protected.Use(middleware.RequireVerifiedMechanic(db))

@@ -664,3 +664,169 @@ type UpdateInstallationBookingStatusRequest struct {
 type MechanicInstallServicesRequest struct {
 	JobTypeIDs []uuid.UUID `json:"job_type_ids" binding:"required,min=1,dive"`
 }
+
+// Community Q&A
+type CreateQuestionRequest struct {
+	Title      string     `json:"title" binding:"required,min=5,max=200"`
+	Body       string     `json:"body" binding:"required,min=10,max=5000"`
+	ProductID  *uuid.UUID `json:"product_id"`
+	CategoryID *uuid.UUID `json:"category_id"`
+	Make       string     `json:"make" binding:"max=100"`
+	Model      string     `json:"model" binding:"max=100"`
+	Year       *int       `json:"year" binding:"omitempty,gte=1900,lte=2100"`
+}
+
+type CreateAnswerRequest struct {
+	Body string `json:"body" binding:"required,min=10,max=5000"`
+}
+
+type QuestionAuthorResponse struct {
+	ID        uuid.UUID `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+}
+
+type AnswerAuthorResponse struct {
+	ID              uuid.UUID                  `json:"id"`
+	FirstName       string                     `json:"first_name"`
+	LastName        string                     `json:"last_name"`
+	MechanicProfile *MechanicProfileSummary    `json:"mechanic_profile,omitempty"`
+}
+
+type AnswerResponse struct {
+	ID                 uuid.UUID            `json:"id"`
+	QuestionID         uuid.UUID            `json:"question_id"`
+	Body               string               `json:"body"`
+	IsAccepted         bool                 `json:"is_accepted"`
+	IsVerifiedMechanic bool                 `json:"is_verified_mechanic"`
+	Author             AnswerAuthorResponse `json:"author"`
+	CreatedAt          time.Time            `json:"created_at"`
+}
+
+type QuestionListItemResponse struct {
+	ID           uuid.UUID              `json:"id"`
+	Title        string                 `json:"title"`
+	Slug         string                 `json:"slug"`
+	Status       string                 `json:"status"`
+	ViewCount    int                    `json:"view_count"`
+	ProductID    *uuid.UUID             `json:"product_id,omitempty"`
+	CategoryID   *uuid.UUID             `json:"category_id,omitempty"`
+	Make         string                 `json:"make,omitempty"`
+	Model        string                 `json:"model,omitempty"`
+	Year         *int                   `json:"year,omitempty"`
+	Author       QuestionAuthorResponse `json:"author"`
+	AnswerCount  int                    `json:"answer_count"`
+	AcceptedAnswer *AnswerResponse      `json:"accepted_answer,omitempty"`
+	CreatedAt    time.Time              `json:"created_at"`
+}
+
+type QuestionDetailResponse struct {
+	ID         uuid.UUID              `json:"id"`
+	Title      string                 `json:"title"`
+	Body       string                 `json:"body"`
+	Slug       string                 `json:"slug"`
+	Status     string                 `json:"status"`
+	ViewCount  int                    `json:"view_count"`
+	ProductID  *uuid.UUID             `json:"product_id,omitempty"`
+	CategoryID *uuid.UUID             `json:"category_id,omitempty"`
+	Make       string                 `json:"make,omitempty"`
+	Model      string                 `json:"model,omitempty"`
+	Year       *int                   `json:"year,omitempty"`
+	Author     QuestionAuthorResponse `json:"author"`
+	Answers    []AnswerResponse       `json:"answers"`
+	CreatedAt  time.Time              `json:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at"`
+}
+
+func questionAuthor(u *models.User) QuestionAuthorResponse {
+	if u == nil {
+		return QuestionAuthorResponse{}
+	}
+	return QuestionAuthorResponse{
+		ID:        u.ID,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+	}
+}
+
+func answerAuthor(u *models.User) AnswerAuthorResponse {
+	if u == nil {
+		return AnswerAuthorResponse{}
+	}
+	resp := AnswerAuthorResponse{
+		ID:        u.ID,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+	}
+	if u.MechanicProfile != nil {
+		resp.MechanicProfile = &MechanicProfileSummary{
+			ID:           u.MechanicProfile.ID,
+			Status:       string(u.MechanicProfile.Status),
+			BusinessName: u.MechanicProfile.BusinessName,
+			IsVerified:   u.MechanicProfile.IsVerified(),
+		}
+	}
+	return resp
+}
+
+func AnswerToResponse(a *models.Answer) AnswerResponse {
+	return AnswerResponse{
+		ID:                 a.ID,
+		QuestionID:         a.QuestionID,
+		Body:               a.Body,
+		IsAccepted:         a.IsAccepted,
+		IsVerifiedMechanic: a.IsVerifiedMechanic,
+		Author:             answerAuthor(&a.User),
+		CreatedAt:          a.CreatedAt,
+	}
+}
+
+func QuestionToListItem(q *models.Question) QuestionListItemResponse {
+	resp := QuestionListItemResponse{
+		ID:          q.ID,
+		Title:       q.Title,
+		Slug:        q.Slug,
+		Status:      string(q.Status),
+		ViewCount:   q.ViewCount,
+		ProductID:   q.ProductID,
+		CategoryID:  q.CategoryID,
+		Make:        q.Make,
+		Model:       q.Model,
+		Year:        q.Year,
+		Author:      questionAuthor(&q.User),
+		AnswerCount: q.AnswerCount,
+		CreatedAt:   q.CreatedAt,
+	}
+	for i := range q.Answers {
+		if q.Answers[i].IsAccepted {
+			ar := AnswerToResponse(&q.Answers[i])
+			resp.AcceptedAnswer = &ar
+			break
+		}
+	}
+	return resp
+}
+
+func QuestionToDetailResponse(q *models.Question) QuestionDetailResponse {
+	answers := make([]AnswerResponse, len(q.Answers))
+	for i := range q.Answers {
+		answers[i] = AnswerToResponse(&q.Answers[i])
+	}
+	return QuestionDetailResponse{
+		ID:         q.ID,
+		Title:      q.Title,
+		Body:       q.Body,
+		Slug:       q.Slug,
+		Status:     string(q.Status),
+		ViewCount:  q.ViewCount,
+		ProductID:  q.ProductID,
+		CategoryID: q.CategoryID,
+		Make:       q.Make,
+		Model:      q.Model,
+		Year:       q.Year,
+		Author:     questionAuthor(&q.User),
+		Answers:    answers,
+		CreatedAt:  q.CreatedAt,
+		UpdatedAt:  q.UpdatedAt,
+	}
+}

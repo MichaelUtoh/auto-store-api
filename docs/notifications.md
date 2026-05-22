@@ -58,6 +58,6 @@ Payload includes `href` for App Router links, e.g. `/mechanic/profile`.
 | `quote.ready` | After `POST /installation/quotes` |
 | `booking.confirmed` | After `POST /installation/bookings` (customer + mechanic) |
 | `mechanic.en_route` | Mechanic sets booking status `en_route` |
-| `qa.answer_posted` | `Notifier.QAAnswerPosted` (future Q&A) |
+| `qa.answer_posted` | Verified mechanic posts `POST /questions/:id/answers` |
 
 Sample payloads: [sample-payloads.md](./sample-payloads.md#notifications).

@@ -1150,6 +1150,250 @@ Use `payload.href` with Next.js `<Link href={...}>`.
 
 ---
 
+## Community Q&A
+
+See [community-qa.md](./community-qa.md).
+
+### POST /questions
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request body (link to product, category, or vehicle):**
+```json
+{
+  "title": "Will these pads fit a 2018 Camry LE?",
+  "body": "I see compatibility listed for 2015-2020 but want to confirm for the LE trim.",
+  "product_id": "550e8400-e29b-41d4-a716-446655440010"
+}
+```
+
+Or vehicle context:
+```json
+{
+  "title": "Best ceramic pads for daily driving?",
+  "body": "Mostly city commuting, occasional highway. Low dust preferred.",
+  "make": "Toyota",
+  "model": "Camry",
+  "year": 2018
+}
+```
+
+**Response (201):** `data` includes `id`, `slug`, `status` (`open`), `answers` (empty).
+
+---
+
+### GET /questions
+
+**Query (optional):**
+```
+?q=brake+pads&product_id=<uuid>&make=toyota&model=camry&year=2018&page=1&limit=20
+```
+
+---
+
+### GET /questions/:slug
+
+**Path:** `slug` from create response (e.g. `will-these-pads-fit-a-2018-camry-le`)
+
+Increments `view_count`. Returns full `body` and `answers` array.
+
+---
+
+### GET /products/:id/questions
+
+**Path:** `id` = product UUID. Same list shape as `GET /questions?product_id=...`.
+
+---
+
+### POST /questions/:id/answers
+
+**Headers:** `Authorization: Bearer <access_token>` (verified mechanic)
+
+**Request body:**
+```json
+{
+  "body": "Yes — these pads fit 2018 Camry LE with the standard brake package. Torque spec 25 ft-lb on caliper bolts."
+}
+```
+
+**Response (201):** Answer with `is_verified_mechanic: true`. Question author receives `qa.answer_posted` notification.
+
+---
+
+### PATCH /questions/:id/accept-answer/:answerId
+
+**Headers:** `Authorization: Bearer <access_token>` (question author)
+
+Marks answer accepted and sets question `status` to `answered`.
+
+---
+
+### PATCH /questions/:id/close
+
+**Headers:** `Authorization: Bearer <access_token>` (author or admin)
+
+Sets `status` to `closed`; thread no longer appears in public list.
+
+---
+
+## Visual Part Finder
+
+See [part-finder.md](./part-finder.md).
+
+### GET /vehicle-systems
+
+No auth.
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "code": "brakes",
+      "name": "Brakes",
+      "description": "Brake pads, rotors, calipers, lines",
+      "display_order": 1
+    }
+  ]
+}
+```
+
+---
+
+### GET /diagrams
+
+**Query:** `make`, `model`, `year`, `system` (vehicle system code), `page`, `limit`
+
+**Response (200):** Paginated list of diagrams with nested `vehicle_system`.
+
+---
+
+### GET /diagrams/:id
+
+**Query:** `include_hotspots=true` to embed hotspots.
+
+---
+
+### GET /diagrams/:id/hotspots/:hotspotId/products
+
+**Query:** `year` (optional; defaults to diagram year range)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "sku": "BP-CAMRY-F",
+      "name": "Front Brake Pads — Ceramic",
+      "brand": "StopTech",
+      "manufacturer_part_number": "ST-1234",
+      "price": 89.99,
+      "condition": "new",
+      "stock_quantity": 42,
+      "primary_image_url": "https://cdn.example.com/products/bp-camry.jpg"
+    }
+  ]
+}
+```
+
+---
+
+### POST /part-identification
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Content-Type:** `multipart/form-data`
+
+| Field | Value |
+|-------|--------|
+| `image` | Image file |
+| `make` | `toyota` |
+| `model` | `camry` |
+| `year` | `2018` |
+| `system` | `brakes` (optional) |
+| `labels` | `["brake pad","caliper"]` or comma-separated (optional) |
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "image_url": "https://cdn.example.com/part-identification/abc.jpg",
+    "diagram_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+    "candidates": [
+      {
+        "part_name": "Front Brake Pad",
+        "confidence": 0.9,
+        "hotspot_id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+        "diagram_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "product_ids": ["550e8400-e29b-41d4-a716-446655440001"]
+      }
+    ]
+  }
+}
+```
+
+Requires S3 configured (`S3_BUCKET`). Without labels, pass `system` for broader hotspot suggestions.
+
+---
+
+### POST /diagrams (Admin/Vendor)
+
+**Request body:**
+```json
+{
+  "vehicle_system_code": "brakes",
+  "title": "2018 Toyota Camry — Front Brakes",
+  "make": "Toyota",
+  "model": "Camry",
+  "year_start": 2018,
+  "year_end": 2020,
+  "image_url": "https://cdn.example.com/diagrams/camry-brakes.png",
+  "svg_overlay_url": "",
+  "image_width": 1200,
+  "image_height": 800,
+  "is_published": true
+}
+```
+
+---
+
+### POST /diagrams/:id/hotspots
+
+**Request body:**
+```json
+{
+  "label": "Front Brake Pad",
+  "oem_part_number": "ST-1234",
+  "x": 12.5,
+  "y": 34.0,
+  "width": 18.0,
+  "height": 12.0,
+  "display_order": 1
+}
+```
+
+Coordinates are percentages (0–100) of the diagram image.
+
+---
+
+### POST /diagrams/:id/hotspots/:hotspotId/products
+
+**Request body:**
+```json
+{
+  "product_id": "550e8400-e29b-41d4-a716-446655440001",
+  "match_type": "primary"
+}
+```
+
+---
+
 ## Health
 
 ### GET /health

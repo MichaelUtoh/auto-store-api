@@ -109,8 +109,22 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.InstallationQuoteLine{},
 		&models.InstallationBooking{},
 		&models.BookingPayment{},
+		&models.Question{},
+		&models.Answer{},
+		&models.VehicleSystem{},
+		&models.Diagram{},
+		&models.DiagramHotspot{},
+		&models.HotspotProduct{},
+		&models.PartLabelTaxonomy{},
+		&models.PartIdentification{},
 	); err != nil {
 		return err
 	}
-	return SeedInstallationJobTypes(db)
+	if err := SeedInstallationJobTypes(db); err != nil {
+		return err
+	}
+	if err := SeedVehicleSystems(db); err != nil {
+		return err
+	}
+	return SeedPartLabelTaxonomies(db)
 }

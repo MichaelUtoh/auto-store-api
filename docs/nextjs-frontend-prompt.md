@@ -133,6 +133,26 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 | Verify/suspend/reject mechanic | PUT | `/admin/mechanics/:userId/verify` etc. | Admin | userId = user UUID |
 | Products (admin/vendor) | POST / PUT / etc. | `/products`, `/products/:id`, ... | Admin/Vendor | Create/update products, images, compatibility |
 | Categories (admin) | POST / PUT / DELETE | `/categories`, `/categories/:id` | Admin | |
+| Q&A list | GET | `/questions` | No | Query: q, product_id, category_id, make, model, year, status, page, limit |
+| Q&A detail | GET | `/questions/:slug` | No | SEO slug, not UUID |
+| Product Q&A | GET | `/products/:id/questions` | No | |
+| Ask question | POST | `/questions` | Yes | |
+| Post answer | POST | `/questions/:id/answers` | Verified mechanic | `:id` = question UUID |
+| Accept answer | PATCH | `/questions/:id/accept-answer/:answerId` | Yes (author) | |
+| Close question | PATCH | `/questions/:id/close` | Yes (author/admin) | |
+| Installation job types | GET | `/installation/job-types` | No | Catalog |
+| Installation quotes | POST / GET | `/installation/quotes`, `/installation/quotes/:id` | Yes | See installation prompt |
+| Installation bookings | POST / GET / PATCH | `/installation/bookings`, `.../cancel` | Yes | |
+| Mechanic install quotes/bookings | GET / PATCH / PUT | `/mechanic/installation/...` | Verified mechanic | |
+| Vehicle systems | GET | `/vehicle-systems` | No | Part finder filters |
+| Diagrams | GET | `/diagrams`, `/diagrams/:id`, `.../hotspots`, `.../products` | No | Interactive exploded views |
+| Part identification | POST | `/part-identification` | Yes | Multipart image + vehicle (AR) |
+
+**Community Q&A (full UI spec):** [nextjs-community-qa-prompt.md](./nextjs-community-qa-prompt.md)
+
+**Visual Part Finder (API reference):** [part-finder.md](./part-finder.md)
+
+**Installation marketplace (full UI spec):** [nextjs-installation-marketplace-prompt.md](./nextjs-installation-marketplace-prompt.md)
 
 ---
 
@@ -171,6 +191,10 @@ Exact field names and nested structures: see backend `internal/models/` and `int
   - **Orders:** List (GET /orders) and detail (GET /orders/:id), cancel (PUT /orders/:id/cancel) when allowed.
   - **Wishlist:** GET /wishlist — list; add from product page; remove (DELETE /wishlist/:productId).
   - **Notifications:** Header bell with GET /notifications/unread-count; dropdown from GET /notifications?unread_only=true; link via `payload.href`; mark read on click (PATCH /notifications/:id/read). Optional `/notifications` page. Poll or refetch on window focus (React Query `refetchOnWindowFocus`).
+  - **Installation marketplace:** Quote wizard, compare mechanic offers, book appointments, track bookings. See [nextjs-installation-marketplace-prompt.md](./nextjs-installation-marketplace-prompt.md). Entry points: product page (installation-eligible), cart, order confirmation.
+
+- **Mechanic (verified)**
+  - **Dashboard:** Installation quote lines, adjust estimates, booking list, status updates (`/mechanic/installation/*`). Apply/profile flows in [mechanics.md](./mechanics.md).
 
 - **Optional (Admin / Vendor)**
   - **Admin:** List all orders, update order status; list users, update user role. Product and category CRUD (create/edit/delete products, categories) if you want a full dashboard.

@@ -4,6 +4,8 @@ Connects customers who buy installation-eligible parts with **verified local mec
 
 Prerequisites: [mechanics.md](./mechanics.md) (verified mechanic profiles).
 
+**Next.js frontend:** [nextjs-installation-marketplace-prompt.md](./nextjs-installation-marketplace-prompt.md)
+
 ---
 
 ## Flow
