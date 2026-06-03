@@ -2,6 +2,7 @@ package router
 
 import (
 	"auto-store-api/internal/config"
+	"auto-store-api/internal/chat"
 	"auto-store-api/internal/handlers"
 	"auto-store-api/internal/middleware"
 	"auto-store-api/internal/models"
@@ -44,6 +45,10 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	authLimiter := middleware.NewRateLimiter(cfg.RateLimit.AuthRPM, cfg.RateLimit.AuthRPM)
 
 	jwt := auth.NewJWTManager(cfg.JWT.Secret, cfg.JWT.AccessExpiry, cfg.JWT.RefreshExpiry)
+	guestJWT := auth.NewGuestTokenManager(cfg.Chat.GuestJWTSecret, cfg.Chat.GuestJWTExpiry)
+	chatHub := chat.NewHub()
+	chat.StartRedisSubscriber(chatHub)
+	chatPublisher := &chat.RedisPublisher{Hub: chatHub}
 
 	userRepo := repositories.NewUserRepository(db)
 	productRepo := repositories.NewProductRepository(db)
@@ -59,6 +64,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	notifRepo := repositories.NewNotificationRepository(db)
 	questionRepo := repositories.NewQuestionRepository(db)
 	diagramRepo := repositories.NewDiagramRepository(db)
+	chatRepo := repositories.NewChatRepository(db)
 
 	authSvc := services.NewAuthService(userRepo, jwt, services.AuthConfig{
 		LockoutAttempts: cfg.RateLimit.LockoutAttempts,
@@ -73,13 +79,14 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	reviewSvc := services.NewReviewService(reviewRepo, orderRepo, productRepo, db)
 	emailSender := email.NewSender(cfg.Email)
 	notifSvc := services.NewNotificationService(notifRepo, userRepo, cache.Client, emailSender, cfg, log)
-	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL)
+	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL, emailSender)
 	mechanicSvc := services.NewMechanicService(mechanicRepo, installRepo, userRepo, notifier, log, db)
 	payoutSvc := services.NewMechanicPayoutService(cfg.Paystack, mechanicRepo, userRepo, log)
 	paymentSvc := services.NewPaymentService(cfg.Paystack, orderRepo, installRepo, mechanicRepo, userRepo, db, log)
 	installSvc := services.NewInstallationService(installRepo, orderRepo, productRepo, mechanicRepo, paymentSvc, notifier, log, db)
 	questionSvc := services.NewQuestionService(questionRepo, productRepo, categoryRepo, notifier, db)
 	diagramSvc := services.NewDiagramService(diagramRepo, productRepo, db)
+	chatSvc := services.NewChatService(chatRepo, userRepo, guestJWT, cfg.Chat, chatPublisher, notifier, log)
 
 	authH := handlers.NewAuthHandler(authSvc)
 	productH := handlers.NewProductHandler(productSvc)
@@ -110,6 +117,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	uploadH := handlers.NewUploadHandler(store, cfg.Upload.AllowedTypes, cfg.Upload.MaxSize)
 	partIDSvc := services.NewPartIdentificationService(diagramRepo, diagramSvc, store, db)
 	partIDH := handlers.NewPartIdentificationHandler(partIDSvc)
+	chatH := handlers.NewChatHandler(chatSvc, jwt, guestJWT)
+	chatWSH := handlers.NewChatWSHandler(chatHub, chatSvc, jwt, guestJWT)
 
 	api := r.Group("/api/v1")
 	{
@@ -145,6 +154,22 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		api.GET("/diagrams/:id", diagramH.Get)
 		api.GET("/diagrams/:id/hotspots", diagramH.ListHotspots)
 		api.GET("/diagrams/:id/hotspots/:hotspotId/products", diagramH.HotspotProducts)
+
+		api.POST("/chat/guest-session", chatH.CreateGuestSession)
+		api.POST("/chat/guest-session/refresh", middleware.GuestAuthRequired(guestJWT), chatH.RefreshGuestSession)
+		api.GET("/ws/chat", chatWSH.Handle)
+
+		chatRoutes := api.Group("")
+		chatRoutes.Use(middleware.FlexibleAuth(jwt, guestJWT, db))
+		{
+			chatRoutes.GET("/conversations/me", chatH.GetMyConversation)
+			chatRoutes.POST("/conversations", chatH.CreateOrGetConversation)
+			chatRoutes.GET("/conversations/:id", chatH.GetConversation)
+			chatRoutes.GET("/conversations/:id/messages", chatH.ListMessages)
+			chatRoutes.POST("/conversations/:id/messages", chatH.SendMessage)
+			chatRoutes.PATCH("/conversations/:id", chatH.UpdateConversation)
+			chatRoutes.PATCH("/conversations/:id/read", chatH.MarkRead)
+		}
 
 		protected := api.Group("")
 		protected.Use(middleware.AuthRequired(jwt, db))
@@ -184,6 +209,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.PATCH("/notifications/read-all", notifH.MarkAllRead)
 			protected.GET("/users/me/notification-preferences", notifH.GetPreferences)
 			protected.PUT("/users/me/notification-preferences", notifH.UpdatePreferences)
+			protected.POST("/conversations/link-guest", chatH.LinkGuest)
 
 			installRoutes := protected.Group("/installation")
 			{
@@ -256,6 +282,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminOnly.PUT("/admin/mechanics/:userId/verify", mechanicH.Verify)
 			adminOnly.PUT("/admin/mechanics/:userId/suspend", mechanicH.Suspend)
 			adminOnly.PUT("/admin/mechanics/:userId/reject", mechanicH.Reject)
+			adminOnly.GET("/admin/conversations", chatH.AdminList)
+			adminOnly.GET("/admin/conversations/unread-count", chatH.AdminUnreadCount)
 		}
 	}
 

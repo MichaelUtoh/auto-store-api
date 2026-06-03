@@ -59,5 +59,25 @@ Payload includes `href` for App Router links, e.g. `/mechanic/profile`.
 | `booking.confirmed` | After `POST /installation/bookings` (customer + mechanic) |
 | `mechanic.en_route` | Mechanic sets booking status `en_route` |
 | `qa.answer_posted` | Verified mechanic posts `POST /questions/:id/answers` |
+| `support.admin_replied` | Admin sends support chat message (in-app for registered customers; direct email for guests with `guest_email`) |
+| `support.new_conversation` | Customer/guest sends first message in a thread (in-app for each admin) |
+
+See [support-chat.md](./support-chat.md) for chat notification payloads.
 
 Sample payloads: [sample-payloads.md](./sample-payloads.md#notifications).
+
+### Support chat payloads
+
+**`support.admin_replied`** (registered customer):
+
+```json
+{ "conversation_id": "<uuid>", "href": "/support" }
+```
+
+**`support.new_conversation`** (admin):
+
+```json
+{ "conversation_id": "<uuid>", "href": "/admin/support/<uuid>" }
+```
+
+Guests with `guest_email` receive admin replies via direct SMTP (not the in-app notifications table).

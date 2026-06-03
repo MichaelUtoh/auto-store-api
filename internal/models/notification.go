@@ -35,6 +35,8 @@ const (
 	NotificationQAAnswerPosted       NotificationType = "qa.answer_posted"
 	NotificationMechanicVerified     NotificationType = "mechanic.verified"
 	NotificationMechanicApplyReceived NotificationType = "mechanic.apply_received"
+	NotificationSupportAdminReplied  NotificationType = "support.admin_replied"
+	NotificationSupportNewConversation NotificationType = "support.new_conversation"
 )
 
 // Notification is a single delivery record (one row per user + channel + idempotency key).

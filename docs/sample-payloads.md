@@ -1236,6 +1236,187 @@ Sets `status` to `closed`; thread no longer appears in public list.
 
 ---
 
+## Support chat
+
+See [support-chat.md](./support-chat.md). Frontend: [nextjs-support-chat-prompt.md](./nextjs-support-chat-prompt.md).
+
+### POST /chat/guest-session
+
+No auth. Rate limited by IP.
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "guest_id": "a10e8400-e29b-41d4-a716-446655440001",
+    "guest_token": "eyJhbGciOiJIUzI1NiIs...",
+    "expires_at": "2026-07-03T12:00:00Z"
+  }
+}
+```
+
+Use `guest_token` as `Authorization: Bearer <guest_token>` on chat routes.
+
+---
+
+### POST /conversations
+
+**Headers:** `Authorization: Bearer <access_token>` or `Bearer <guest_token>`
+
+**Request body (optional):**
+```json
+{
+  "context_type": "order",
+  "context_id": "550e8400-e29b-41d4-a716-446655440099",
+  "guest_name": "Ada"
+}
+```
+
+**Response (200 or 201):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "b20e8400-e29b-41d4-a716-446655440002",
+    "user_id": null,
+    "guest_id": "a10e8400-e29b-41d4-a716-446655440001",
+    "guest_email": null,
+    "guest_name": "Ada",
+    "status": "open",
+    "context_type": "order",
+    "context_id": "550e8400-e29b-41d4-a716-446655440099",
+    "last_message_at": "2026-06-03T12:00:00Z",
+    "created_at": "2026-06-03T12:00:00Z"
+  }
+}
+```
+
+---
+
+### GET /conversations/:id/messages
+
+**Query (optional):** `?page=1&limit=50&since=2026-06-03T12:00:00Z`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "c30e8400-e29b-41d4-a716-446655440003",
+      "conversation_id": "b20e8400-e29b-41d4-a716-446655440002",
+      "sender_type": "customer",
+      "sender_user_id": null,
+      "body": "Where is my order?",
+      "created_at": "2026-06-03T12:01:00Z"
+    },
+    {
+      "id": "c30e8400-e29b-41d4-a716-446655440004",
+      "conversation_id": "b20e8400-e29b-41d4-a716-446655440002",
+      "sender_type": "admin",
+      "sender_user_id": "660e8400-e29b-41d4-a716-446655440000",
+      "body": "Please share your order number and we'll look it up.",
+      "created_at": "2026-06-03T12:05:00Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 50, "total": 2, "total_pages": 1 }
+}
+```
+
+---
+
+### POST /conversations/:id/messages
+
+**Request body:**
+```json
+{ "body": "Order #1042 — placed yesterday." }
+```
+
+**Response (201):** Same shape as one message object above.
+
+---
+
+### PATCH /conversations/:id
+
+**Guest — save email (option B, after first message or admin reply):**
+```json
+{
+  "guest_email": "ada@example.com",
+  "guest_name": "Ada"
+}
+```
+
+**Close thread:**
+```json
+{ "status": "closed" }
+```
+
+**Response (200):** Updated conversation object.
+
+---
+
+### POST /conversations/link-guest
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request body:**
+```json
+{ "guest_token": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "linked_count": 1,
+    "conversation_ids": ["b20e8400-e29b-41d4-a716-446655440002"]
+  }
+}
+```
+
+---
+
+### GET /admin/conversations
+
+**Headers:** `Authorization: Bearer <admin access_token>`
+
+**Query (optional):**
+```
+?status=open&guest_only=true&unread_only=true&page=1&limit=20
+```
+
+**Response:** Paginated list of conversation objects with `unread_count` for admin.
+
+---
+
+### WebSocket /ws/chat
+
+**Connect:** `GET /api/v1/ws/chat?token=<access_or_guest_token>`
+
+**Subscribe (client → server):**
+```json
+{ "type": "subscribe", "conversation_id": "b20e8400-e29b-41d4-a716-446655440002" }
+```
+
+**New message (server → client):**
+```json
+{
+  "type": "message.new",
+  "message": {
+    "id": "c30e8400-e29b-41d4-a716-446655440004",
+    "conversation_id": "b20e8400-e29b-41d4-a716-446655440002",
+    "sender_type": "admin",
+    "sender_user_id": "660e8400-e29b-41d4-a716-446655440000",
+    "body": "Your order shipped today.",
+    "created_at": "2026-06-03T14:00:00Z"
+  }
+}
+```
+
+---
+
 ## Visual Part Finder
 
 See [part-finder.md](./part-finder.md). Frontend: [nextjs-part-finder-prompt.md](./nextjs-part-finder-prompt.md).

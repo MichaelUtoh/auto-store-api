@@ -10,6 +10,7 @@ Production-ready RESTful API for an auto-parts e-commerce platform built with Go
 - **Visual Part Finder**: Interactive exploded diagrams + AR part identification (hotspot → catalog matching)
 - **Installation marketplace**: Quote nearby verified mechanics and book installation appointments
 - **Notifications**: In-app feed + async email (Redis queue, worker process)
+- **Support chat**: Real-time user/guest ↔ admin chat — [docs/support-chat.md](docs/support-chat.md)
 - **Products**: CRUD, advanced search (full-text, category, tags, vehicle compatibility, price range), reviews, compatibility
 - **Categories**: Hierarchical categories, tree listing, products by category
 - **Cart & Orders**: Cart management, checkout, order status (admin)

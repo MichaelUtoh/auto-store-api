@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"auto-store-api/internal/models"
+	"auto-store-api/pkg/email"
 
 	"github.com/google/uuid"
 )
@@ -13,10 +14,11 @@ import (
 type Notifier struct {
 	notify *NotificationService
 	appURL string
+	email  email.Sender
 }
 
-func NewNotifier(notify *NotificationService, frontendURL string) *Notifier {
-	return &Notifier{notify: notify, appURL: frontendURL}
+func NewNotifier(notify *NotificationService, frontendURL string, emailSender email.Sender) *Notifier {
+	return &Notifier{notify: notify, appURL: frontendURL, email: emailSender}
 }
 
 func (n *Notifier) MechanicVerified(ctx context.Context, userID uuid.UUID, businessName string) error {
@@ -113,4 +115,71 @@ func (n *Notifier) QAAnswerPosted(ctx context.Context, userID uuid.UUID, questio
 			"href":        href,
 		},
 	})
+}
+
+func (n *Notifier) SupportAdminReplied(ctx context.Context, conv *models.Conversation, messageID uuid.UUID, preview string) error {
+	if conv == nil {
+		return nil
+	}
+	href := "/support"
+	if n.appURL != "" {
+		href = n.appURL + href
+	}
+	title := "Support replied"
+	body := fmt.Sprintf("Support replied to your message: %s", truncatePreview(preview, 120))
+
+	if conv.UserID != nil {
+		return n.notify.Notify(ctx, NotifyInput{
+			UserID:         *conv.UserID,
+			Type:           models.NotificationSupportAdminReplied,
+			IdempotencyKey: fmt.Sprintf("support:%s:msg:%s:admin_replied", conv.ID, messageID),
+			Title:          title,
+			Body:           body,
+			Payload: map[string]interface{}{
+				"conversation_id": conv.ID.String(),
+				"href":            "/support",
+			},
+		})
+	}
+
+	if conv.GuestEmail != "" && n.email != nil {
+		emailBody := body
+		if n.appURL != "" {
+			emailBody += fmt.Sprintf("\n\nOpen chat: %s", href)
+		}
+		return n.email.Send(conv.GuestEmail, title, emailBody)
+	}
+	return nil
+}
+
+func (n *Notifier) SupportNewConversation(ctx context.Context, adminUserID uuid.UUID, conv *models.Conversation, preview string) error {
+	if conv == nil {
+		return nil
+	}
+	label := "Customer"
+	if conv.GuestID != nil {
+		if conv.GuestName != "" {
+			label = conv.GuestName
+		} else {
+			label = "Guest"
+		}
+	}
+	return n.notify.Notify(ctx, NotifyInput{
+		UserID:         adminUserID,
+		Type:           models.NotificationSupportNewConversation,
+		IdempotencyKey: fmt.Sprintf("support:%s:new:admin:%s", conv.ID, adminUserID),
+		Title:          "New support message",
+		Body:           fmt.Sprintf("%s: %s", label, truncatePreview(preview, 120)),
+		Payload: map[string]interface{}{
+			"conversation_id": conv.ID.String(),
+			"href":            fmt.Sprintf("/admin/support/%s", conv.ID),
+		},
+	})
+}
+
+func truncatePreview(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max-3] + "..."
 }

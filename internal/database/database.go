@@ -117,6 +117,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.HotspotProduct{},
 		&models.PartLabelTaxonomy{},
 		&models.PartIdentification{},
+		&models.Conversation{},
+		&models.ChatMessage{},
 	); err != nil {
 		return err
 	}

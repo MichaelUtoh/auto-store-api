@@ -53,3 +53,9 @@ func (r *UserRepository) Count() (int64, error) {
 	err := r.db.Model(&models.User{}).Count(&count).Error
 	return count, err
 }
+
+func (r *UserRepository) ListByRole(role models.Role) ([]models.User, error) {
+	var users []models.User
+	err := r.db.Where("role = ?", role).Find(&users).Error
+	return users, err
+}

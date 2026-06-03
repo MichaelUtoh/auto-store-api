@@ -16,7 +16,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: change-me-in-production
-      # Passed from project .env when you run `docker compose up` (Compose reads .env for ${VAR})
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+      # Support chat WebSocket: ws://localhost:8089/api/v1/ws/chat?token=...
       S3_BUCKET: ${S3_BUCKET:-}
       S3_REGION: ${S3_REGION:-}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}

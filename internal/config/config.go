@@ -24,6 +24,16 @@ type Config struct {
 	App           AppConfig
 	Notifications NotificationsConfig
 	Paystack      PaystackConfig
+	Chat          ChatConfig
+}
+
+// ChatConfig holds support chat settings.
+type ChatConfig struct {
+	GuestJWTSecret       string
+	GuestJWTExpiry       time.Duration
+	MessageMaxLen        int
+	MessageRateLimitPerM int
+	GuestSessionPerHour  int
 }
 
 // PaystackConfig holds Paystack payment provider settings.
@@ -123,6 +133,9 @@ func Load() (*Config, error) {
 	accessExpiry, _ := time.ParseDuration(getEnv("JWT_ACCESS_EXPIRY", "15m"))
 	refreshExpiry, _ := time.ParseDuration(getEnv("JWT_REFRESH_EXPIRY", "168h"))
 	lockoutDuration, _ := time.ParseDuration(getEnv("ACCOUNT_LOCKOUT_DURATION", "15m"))
+	guestJWTExpiry, _ := time.ParseDuration(getEnv("GUEST_JWT_EXPIRY", "720h"))
+	jwtSecret := getEnv("JWT_SECRET", "change-me-in-production")
+	guestJWTSecret := getEnv("GUEST_JWT_SECRET", jwtSecret)
 
 	cfg := &Config{
 		Server: ServerConfig{
@@ -144,7 +157,7 @@ func Load() (*Config, error) {
 			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		JWT: JWTConfig{
-			Secret:        getEnv("JWT_SECRET", "change-me-in-production"),
+			Secret:        jwtSecret,
 			AccessExpiry:  accessExpiry,
 			RefreshExpiry: refreshExpiry,
 		},
@@ -204,6 +217,13 @@ func Load() (*Config, error) {
 				RequireSplitForBookings: getEnv("PAYSTACK_REQUIRE_SPLIT_BOOKINGS", "true") == "true",
 			}
 		}(),
+		Chat: ChatConfig{
+			GuestJWTSecret:       guestJWTSecret,
+			GuestJWTExpiry:       guestJWTExpiry,
+			MessageMaxLen:        getEnvInt("CHAT_MESSAGE_MAX_LEN", 2000),
+			MessageRateLimitPerM: getEnvInt("CHAT_RATE_LIMIT_PER_MIN", 20),
+			GuestSessionPerHour:  getEnvInt("CHAT_GUEST_SESSION_PER_HOUR", 10),
+		},
 	}
 
 	cfg.Database.DSN = "host=" + cfg.Database.Host + " port=" + cfg.Database.Port +

@@ -13,8 +13,10 @@ import (
 
 const (
 	UserIDKey   = "user_id"
+	GuestIDKey  = "guest_id"
 	UserKey     = "user"
 	ClaimsKey   = "claims"
+	GuestClaimsKey = "guest_claims"
 )
 
 // AuthRequired validates JWT and sets user context
@@ -125,6 +127,63 @@ func GetUser(c *gin.Context) (*models.User, bool) {
 		return nil, false
 	}
 	return u.(*models.User), true
+}
+
+// FlexibleAuth accepts a user access JWT or a guest chat JWT.
+func FlexibleAuth(jwt *auth.JWTManager, guestJWT *auth.GuestTokenManager, db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := extractBearerToken(c)
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
+			return
+		}
+		if claims, err := jwt.ValidateAccessToken(token); err == nil {
+			var user models.User
+			if err := db.Preload("MechanicProfile").First(&user, "id = ?", claims.UserID).Error; err != nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+				return
+			}
+			c.Set(ClaimsKey, claims)
+			c.Set(UserIDKey, user.ID)
+			c.Set(UserKey, &user)
+			c.Next()
+			return
+		}
+		if guestClaims, err := guestJWT.Validate(token); err == nil {
+			c.Set(GuestClaimsKey, guestClaims)
+			c.Set(GuestIDKey, guestClaims.GuestID)
+			c.Next()
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+	}
+}
+
+// GuestAuthRequired validates a guest chat JWT only.
+func GuestAuthRequired(guestJWT *auth.GuestTokenManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := extractBearerToken(c)
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
+			return
+		}
+		guestClaims, err := guestJWT.Validate(token)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			return
+		}
+		c.Set(GuestClaimsKey, guestClaims)
+		c.Set(GuestIDKey, guestClaims.GuestID)
+		c.Next()
+	}
+}
+
+func GetGuestID(c *gin.Context) (uuid.UUID, bool) {
+	id, exists := c.Get(GuestIDKey)
+	if !exists {
+		return uuid.Nil, false
+	}
+	return id.(uuid.UUID), true
 }
 
 func extractBearerToken(c *gin.Context) string {

@@ -13,6 +13,294 @@
     "host": "localhost:8089",
     "basePath": "/",
     "paths": {
+        "/api/v1/admin/conversations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Admin support inbox",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "open or closed",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Guests only",
+                        "name": "guest_only",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Unread only",
+                        "name": "unread_only",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/installation/bookings/{id}/refund": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Admin: refund installation booking via Paystack",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.RefundResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/mechanics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "List mechanic profiles (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by status (pending, verified, suspended, rejected)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/mechanics/{userId}/reject": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Reject a mechanic application (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rejection reason",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicAdminActionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/mechanics/{userId}/suspend": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Suspend a mechanic (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional reason",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicAdminActionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/mechanics/{userId}/verify": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Verify a mechanic application (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/orders": {
             "get": {
                 "security": [
@@ -52,6 +340,42 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/orders/{id}/refund": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Admin: refund order via Paystack",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.RefundResult"
                         }
                     }
                 }
@@ -140,7 +464,7 @@
                         "required": true
                     },
                     {
-                        "description": "Role (ADMIN, VENDOR, CUSTOMER)",
+                        "description": "Role (ADMIN, VENDOR, CUSTOMER, MECHANIC)",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -816,6 +1140,751 @@
                 }
             }
         },
+        "/api/v1/chat/guest-session": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Create guest chat session",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.GuestSessionResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/chat/guest-session/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Refresh guest chat token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.GuestSessionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/conversations": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Get or create open support conversation",
+                "parameters": [
+                    {
+                        "description": "Optional context",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.CreateConversationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/conversations/link-guest": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Link guest chat history to logged-in user",
+                "parameters": [
+                    {
+                        "description": "Guest token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.LinkGuestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.LinkGuestResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/conversations/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Get current open conversation",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/conversations/{id}/messages": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "support-chat"
+                ],
+                "summary": "Send a chat message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.SendChatMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ChatMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/installation/bookings/{id}/pay": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Initialize Paystack checkout for an installation booking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.PaymentInitializeResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/installation/bookings/{id}/refund": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Refund a paid installation booking via Paystack",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Booking ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional partial amount and notes",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.RefundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.RefundResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanic/apply": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Apply to become a verified mechanic",
+                "parameters": [
+                    {
+                        "description": "Application",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicApplyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanic/documents": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Add a verification document to mechanic profile",
+                "parameters": [
+                    {
+                        "description": "Document",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanic/documents/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Remove a verification document",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanic/payout": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Get Paystack payout / subaccount status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.MechanicPayoutStatus"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Register or update mechanic bank account for Paystack split payouts",
+                "parameters": [
+                    {
+                        "description": "Bank details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicPayoutSetupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.MechanicPayoutStatus"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanic/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Get current user's mechanic profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Update current user's mechanic profile",
+                "parameters": [
+                    {
+                        "description": "Profile updates",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicUpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanics": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "List verified mechanics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/mechanics/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mechanics"
+                ],
+                "summary": "Get a verified mechanic's public profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Mechanic profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "List in-app notifications",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Unread only",
+                        "name": "unread_only",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/auto-store-api_internal_handlers_dto.NotificationResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark all in-app notifications as read",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/unread-count": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Get unread in-app notification count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UnreadCountResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{id}/read": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Mark one in-app notification as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/orders": {
             "get": {
                 "security": [
@@ -977,6 +2046,163 @@
                 }
             }
         },
+        "/api/v1/orders/{id}/pay": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Initialize Paystack checkout for an order",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.PaymentInitializeResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/refund": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "payments",
+                    "payments"
+                ],
+                "summary": "Refund a paid order via Paystack",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional partial amount and notes",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.RefundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.RefundResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/banks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "payments",
+                    "payments"
+                ],
+                "summary": "Refund a paid order via Paystack",
+                "parameters": [
+                    {
+                        "description": "Optional partial amount and notes",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.RefundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_services.RefundResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/verify": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Verify a Paystack transaction by reference",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Paystack reference",
+                        "name": "reference",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/products": {
             "get": {
                 "produces": [
@@ -1004,11 +2230,35 @@
                         "description": "Category slug (filter to products in that category)",
                         "name": "category",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (matches name, description, sku, part number)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum price (inclusive)",
+                        "name": "min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum price (inclusive); if min and max are both set, max must be greater than min",
+                        "name": "max",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
                         }
@@ -1835,6 +3085,66 @@
                 }
             }
         },
+        "/api/v1/users/me/notification-preferences": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Get notification preferences",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.NotificationPreferenceResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Update notification preferences",
+                "parameters": [
+                    {
+                        "description": "Preferences",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.NotificationPreferenceResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/wishlist": {
             "get": {
                 "security": [
@@ -1935,6 +3245,25 @@
                     }
                 }
             }
+        },
+        "/webhooks/paystack": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Paystack webhook (charge.success)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2029,6 +3358,67 @@
                 }
             }
         },
+        "auto-store-api_internal_handlers_dto.ChatMessageResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "conversation_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "sender_type": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.MessageSenderType"
+                },
+                "sender_user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.ConversationResponse": {
+            "type": "object",
+            "properties": {
+                "context_id": {
+                    "type": "string"
+                },
+                "context_type": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.ChatContextType"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "guest_email": {
+                    "type": "string"
+                },
+                "guest_id": {
+                    "type": "string"
+                },
+                "guest_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_message_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.ConversationStatus"
+                },
+                "unread_count": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "auto-store-api_internal_handlers_dto.CreateAddressRequest": {
             "type": "object",
             "required": [
@@ -2087,6 +3477,20 @@
                     "type": "string"
                 },
                 "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.CreateConversationRequest": {
+            "type": "object",
+            "properties": {
+                "context_id": {
+                    "type": "string"
+                },
+                "context_type": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.ChatContextType"
+                },
+                "guest_name": {
                     "type": "string"
                 }
             }
@@ -2225,6 +3629,45 @@
                 }
             }
         },
+        "auto-store-api_internal_handlers_dto.GuestSessionResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "guest_id": {
+                    "type": "string"
+                },
+                "guest_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.LinkGuestRequest": {
+            "type": "object",
+            "required": [
+                "guest_token"
+            ],
+            "properties": {
+                "guest_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.LinkGuestResponse": {
+            "type": "object",
+            "properties": {
+                "conversation_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "linked_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "auto-store-api_internal_handlers_dto.LoginRequest": {
             "type": "object",
             "required": [
@@ -2236,6 +3679,317 @@
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicAdminActionRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicApplyRequest": {
+            "type": "object",
+            "required": [
+                "business_name",
+                "city",
+                "postal_code",
+                "state"
+            ],
+            "properties": {
+                "bio": {
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "business_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentRequest"
+                    }
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "service_radius_km": {
+                    "type": "number",
+                    "maximum": 500,
+                    "minimum": 1
+                },
+                "state": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "street": {
+                    "type": "string",
+                    "maxLength": 200
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicDocumentRequest": {
+            "type": "object",
+            "required": [
+                "document_type",
+                "url"
+            ],
+            "properties": {
+                "document_type": {
+                    "type": "string",
+                    "enum": [
+                        "license",
+                        "insurance",
+                        "certification",
+                        "other"
+                    ]
+                },
+                "file_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "document_type": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicPayoutSetupRequest": {
+            "type": "object",
+            "required": [
+                "account_number",
+                "bank_code"
+            ],
+            "properties": {
+                "account_number": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 10
+                },
+                "bank_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicProfileResponse": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string"
+                },
+                "business_name": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentResponse"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "rating_avg": {
+                    "type": "number"
+                },
+                "rating_count": {
+                    "type": "integer"
+                },
+                "service_radius_km": {
+                    "type": "number"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "verified_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicProfileSummary": {
+            "type": "object",
+            "properties": {
+                "business_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.MechanicUpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string",
+                    "maxLength": 2000
+                },
+                "business_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "service_radius_km": {
+                    "type": "number",
+                    "maximum": 500,
+                    "minimum": 1
+                },
+                "state": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "street": {
+                    "type": "string",
+                    "maxLength": 200
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.NotificationPreferenceResponse": {
+            "type": "object",
+            "properties": {
+                "email_enabled": {
+                    "type": "boolean"
+                },
+                "in_app_enabled": {
+                    "type": "boolean"
+                },
+                "push_enabled": {
+                    "type": "boolean"
+                },
+                "sms_enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.NotificationResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "read_at": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
@@ -2269,6 +4023,22 @@
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.RefundRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "customer_note": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "merchant_note": {
+                    "type": "string",
+                    "maxLength": 500
                 }
             }
         },
@@ -2312,6 +4082,25 @@
                 },
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.SendChatMessageRequest": {
+            "type": "object",
+            "required": [
+                "body"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.UnreadCountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
                 }
             }
         },
@@ -2364,6 +4153,23 @@
                 },
                 "slug": {
                     "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest": {
+            "type": "object",
+            "properties": {
+                "email_enabled": {
+                    "type": "boolean"
+                },
+                "in_app_enabled": {
+                    "type": "boolean"
+                },
+                "push_enabled": {
+                    "type": "boolean"
+                },
+                "sms_enabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2475,7 +4281,8 @@
                     "enum": [
                         "ADMIN",
                         "VENDOR",
-                        "CUSTOMER"
+                        "CUSTOMER",
+                        "MECHANIC"
                     ]
                 }
             }
@@ -2500,6 +4307,9 @@
                 },
                 "last_name": {
                     "type": "string"
+                },
+                "mechanic_profile": {
+                    "$ref": "#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileSummary"
                 },
                 "phone": {
                     "type": "string"
@@ -2650,6 +4460,205 @@
                 }
             }
         },
+        "auto-store-api_internal_models.ChatContextType": {
+            "type": "string",
+            "enum": [
+                "general",
+                "order",
+                "product"
+            ],
+            "x-enum-varnames": [
+                "ChatContextGeneral",
+                "ChatContextOrder",
+                "ChatContextProduct"
+            ]
+        },
+        "auto-store-api_internal_models.ConversationStatus": {
+            "type": "string",
+            "enum": [
+                "open",
+                "closed"
+            ],
+            "x-enum-varnames": [
+                "ConversationStatusOpen",
+                "ConversationStatusClosed"
+            ]
+        },
+        "auto-store-api_internal_models.MechanicDocument": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "document_type": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.MechanicDocumentType"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mechanic_profile_id": {
+                    "type": "string"
+                },
+                "review_notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.MechanicDocumentStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_models.MechanicDocumentStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "approved",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "MechanicDocStatusPending",
+                "MechanicDocStatusApproved",
+                "MechanicDocStatusRejected"
+            ]
+        },
+        "auto-store-api_internal_models.MechanicDocumentType": {
+            "type": "string",
+            "enum": [
+                "license",
+                "insurance",
+                "certification",
+                "other"
+            ],
+            "x-enum-varnames": [
+                "MechanicDocLicense",
+                "MechanicDocInsurance",
+                "MechanicDocCertification",
+                "MechanicDocOther"
+            ]
+        },
+        "auto-store-api_internal_models.MechanicProfile": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string"
+                },
+                "business_name": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.MechanicDocument"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "payout_configured_at": {
+                    "type": "string"
+                },
+                "paystack_account_name": {
+                    "type": "string"
+                },
+                "paystack_subaccount_code": {
+                    "description": "Paystack subaccount for installation booking payouts (split payments).",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "rating_avg": {
+                    "type": "number"
+                },
+                "rating_count": {
+                    "type": "integer"
+                },
+                "rejection_reason": {
+                    "type": "string"
+                },
+                "service_radius_km": {
+                    "type": "number"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.MechanicProfileStatus"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "suspended_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.User"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "verified_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_models.MechanicProfileStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "verified",
+                "suspended",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "MechanicStatusPending",
+                "MechanicStatusVerified",
+                "MechanicStatusSuspended",
+                "MechanicStatusRejected"
+            ]
+        },
+        "auto-store-api_internal_models.MessageSenderType": {
+            "type": "string",
+            "enum": [
+                "customer",
+                "admin",
+                "system"
+            ],
+            "x-enum-varnames": [
+                "MessageSenderCustomer",
+                "MessageSenderAdmin",
+                "MessageSenderSystem"
+            ]
+        },
         "auto-store-api_internal_models.Product": {
             "type": "object",
             "properties": {
@@ -2691,6 +4700,12 @@
                     "items": {
                         "$ref": "#/definitions/auto-store-api_internal_models.ProductImage"
                     }
+                },
+                "installation_eligible": {
+                    "type": "boolean"
+                },
+                "installation_job_type_id": {
+                    "type": "string"
                 },
                 "manufacturer_part_number": {
                     "type": "string"
@@ -2821,12 +4836,14 @@
             "enum": [
                 "ADMIN",
                 "VENDOR",
-                "CUSTOMER"
+                "CUSTOMER",
+                "MECHANIC"
             ],
             "x-enum-varnames": [
                 "RoleAdmin",
                 "RoleVendor",
-                "RoleCustomer"
+                "RoleCustomer",
+                "RoleMechanic"
             ]
         },
         "auto-store-api_internal_models.Specification": {
@@ -2905,6 +4922,9 @@
                 "last_name": {
                     "type": "string"
                 },
+                "mechanic_profile": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.MechanicProfile"
+                },
                 "phone": {
                     "type": "string"
                 },
@@ -2951,6 +4971,78 @@
                 },
                 "year_start": {
                     "type": "integer"
+                }
+            }
+        },
+        "auto-store-api_internal_services.MechanicPayoutStatus": {
+            "type": "object",
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "account_number_last4": {
+                    "type": "string"
+                },
+                "bank_code": {
+                    "type": "string"
+                },
+                "configured": {
+                    "type": "boolean"
+                },
+                "configured_at": {
+                    "type": "string"
+                },
+                "subaccount_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_services.PaymentInitializeResult": {
+            "type": "object",
+            "properties": {
+                "access_code": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "integer"
+                },
+                "authorization_url": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "public_key": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                }
+            }
+        },
+        "auto-store-api_internal_services.RefundResult": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "type": "string"
+                },
+                "paystack_refund_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "transaction_reference": {
+                    "type": "string"
                 }
             }
         },

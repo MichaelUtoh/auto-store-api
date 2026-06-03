@@ -242,10 +242,33 @@ See [community-qa.md](./community-qa.md).
 
 ---
 
+## Support chat
+
+Real-time customer/guest ↔ admin chat. Full spec: [support-chat.md](./support-chat.md).
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/chat/guest-session` | No | Issue guest chat token (rate limited). |
+| POST | `/api/v1/chat/guest-session/refresh` | Guest | Refresh guest token. |
+| GET | `/api/v1/conversations/me` | User or guest | Current open conversation. |
+| POST | `/api/v1/conversations` | User or guest | Get-or-create open conversation. |
+| GET | `/api/v1/conversations/:id` | Owner or admin | Conversation detail. |
+| GET | `/api/v1/conversations/:id/messages` | Owner or admin | Message history. |
+| POST | `/api/v1/conversations/:id/messages` | Owner or admin | Send message (REST fallback). |
+| PATCH | `/api/v1/conversations/:id` | Owner or admin | Close; guest email/name. |
+| PATCH | `/api/v1/conversations/:id/read` | Owner or admin | Update read cursor. |
+| POST | `/api/v1/conversations/link-guest` | User | Merge guest threads on login. |
+| GET | `/api/v1/admin/conversations` | Admin | Support inbox. |
+| GET | `/api/v1/admin/conversations/unread-count` | Admin | Inbox badge count. |
+| GET | `/api/v1/ws/chat` | User, guest, or admin | WebSocket upgrade (`token` query). |
+
+---
+
 ## Summary
 
-- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews/questions GET, categories list/get/products, verified mechanics list/get, installation job types, community Q&A list/detail, vehicle systems, diagrams list/detail/hotspots/products.
-- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, notifications, notification preferences, create product review, ask/accept/close Q&A questions, part identification, mechanic apply/profile/documents, installation quotes/bookings.
+- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews/questions GET, categories list/get/products, verified mechanics list/get, installation job types, community Q&A list/detail, vehicle systems, diagrams list/detail/hotspots/products, guest chat session (planned).
+- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, notifications, notification preferences, create product review, ask/accept/close Q&A questions, part identification, mechanic apply/profile/documents, installation quotes/bookings, link guest chat on login (`POST /conversations/link-guest`).
+- **Flexible auth (user JWT or guest token):** Support chat conversations and messages, WebSocket `/ws/chat`.
 - **Admin or Vendor:** Products create/batch/update, product images, product compatibility, diagrams and hotspots CRUD, hotspot product links.
-- **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update, mechanic verification workflow.
+- **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update, mechanic verification workflow, support chat inbox.
 - **Mechanic (role MECHANIC, verified profile):** Installation quote responses, bookings, service catalog, Q&A answers.

@@ -60,6 +60,46 @@ definitions:
       product:
         $ref: '#/definitions/auto-store-api_internal_models.Product'
     type: object
+  auto-store-api_internal_handlers_dto.ChatMessageResponse:
+    properties:
+      body:
+        type: string
+      conversation_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      sender_type:
+        $ref: '#/definitions/auto-store-api_internal_models.MessageSenderType'
+      sender_user_id:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.ConversationResponse:
+    properties:
+      context_id:
+        type: string
+      context_type:
+        $ref: '#/definitions/auto-store-api_internal_models.ChatContextType'
+      created_at:
+        type: string
+      guest_email:
+        type: string
+      guest_id:
+        type: string
+      guest_name:
+        type: string
+      id:
+        type: string
+      last_message_at:
+        type: string
+      status:
+        $ref: '#/definitions/auto-store-api_internal_models.ConversationStatus'
+      unread_count:
+        type: integer
+      user_id:
+        type: string
+    type: object
   auto-store-api_internal_handlers_dto.CreateAddressRequest:
     properties:
       city:
@@ -103,6 +143,15 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  auto-store-api_internal_handlers_dto.CreateConversationRequest:
+    properties:
+      context_id:
+        type: string
+      context_type:
+        $ref: '#/definitions/auto-store-api_internal_models.ChatContextType'
+      guest_name:
+        type: string
     type: object
   auto-store-api_internal_handlers_dto.CreateOrderRequest:
     properties:
@@ -197,6 +246,31 @@ definitions:
     required:
     - email
     type: object
+  auto-store-api_internal_handlers_dto.GuestSessionResponse:
+    properties:
+      expires_at:
+        type: string
+      guest_id:
+        type: string
+      guest_token:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.LinkGuestRequest:
+    properties:
+      guest_token:
+        type: string
+    required:
+    - guest_token
+    type: object
+  auto-store-api_internal_handlers_dto.LinkGuestResponse:
+    properties:
+      conversation_ids:
+        items:
+          type: string
+        type: array
+      linked_count:
+        type: integer
+    type: object
   auto-store-api_internal_handlers_dto.LoginRequest:
     properties:
       email:
@@ -206,6 +280,220 @@ definitions:
     required:
     - email
     - password
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicAdminActionRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicApplyRequest:
+    properties:
+      bio:
+        maxLength: 2000
+        type: string
+      business_name:
+        maxLength: 200
+        type: string
+      city:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 100
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentRequest'
+        type: array
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+      postal_code:
+        maxLength: 20
+        type: string
+      service_radius_km:
+        maximum: 500
+        minimum: 1
+        type: number
+      state:
+        maxLength: 100
+        type: string
+      street:
+        maxLength: 200
+        type: string
+    required:
+    - business_name
+    - city
+    - postal_code
+    - state
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicDocumentRequest:
+    properties:
+      document_type:
+        enum:
+        - license
+        - insurance
+        - certification
+        - other
+        type: string
+      file_name:
+        maxLength: 255
+        type: string
+      url:
+        type: string
+    required:
+    - document_type
+    - url
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicDocumentResponse:
+    properties:
+      created_at:
+        type: string
+      document_type:
+        type: string
+      file_name:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+      url:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicPayoutSetupRequest:
+    properties:
+      account_number:
+        maxLength: 20
+        minLength: 10
+        type: string
+      bank_code:
+        type: string
+    required:
+    - account_number
+    - bank_code
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicProfileResponse:
+    properties:
+      bio:
+        type: string
+      business_name:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentResponse'
+        type: array
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+      postal_code:
+        type: string
+      rating_avg:
+        type: number
+      rating_count:
+        type: integer
+      service_radius_km:
+        type: number
+      state:
+        type: string
+      status:
+        type: string
+      street:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      verified_at:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicProfileSummary:
+    properties:
+      business_name:
+        type: string
+      id:
+        type: string
+      is_verified:
+        type: boolean
+      status:
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.MechanicUpdateProfileRequest:
+    properties:
+      bio:
+        maxLength: 2000
+        type: string
+      business_name:
+        maxLength: 200
+        type: string
+      city:
+        maxLength: 100
+        type: string
+      country:
+        maxLength: 100
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+      postal_code:
+        maxLength: 20
+        type: string
+      service_radius_km:
+        maximum: 500
+        minimum: 1
+        type: number
+      state:
+        maxLength: 100
+        type: string
+      street:
+        maxLength: 200
+        type: string
+    type: object
+  auto-store-api_internal_handlers_dto.NotificationPreferenceResponse:
+    properties:
+      email_enabled:
+        type: boolean
+      in_app_enabled:
+        type: boolean
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
+  auto-store-api_internal_handlers_dto.NotificationResponse:
+    properties:
+      body:
+        type: string
+      channel:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      payload:
+        additionalProperties: true
+        type: object
+      read_at:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
     type: object
   auto-store-api_internal_handlers_dto.ProductImageItem:
     properties:
@@ -227,6 +515,17 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  auto-store-api_internal_handlers_dto.RefundRequest:
+    properties:
+      amount:
+        type: number
+      customer_note:
+        maxLength: 500
+        type: string
+      merchant_note:
+        maxLength: 500
+        type: string
     type: object
   auto-store-api_internal_handlers_dto.RegisterRequest:
     properties:
@@ -257,6 +556,18 @@ definitions:
     required:
     - new_password
     - token
+    type: object
+  auto-store-api_internal_handlers_dto.SendChatMessageRequest:
+    properties:
+      body:
+        type: string
+    required:
+    - body
+    type: object
+  auto-store-api_internal_handlers_dto.UnreadCountResponse:
+    properties:
+      count:
+        type: integer
     type: object
   auto-store-api_internal_handlers_dto.UpdateAddressRequest:
     properties:
@@ -291,6 +602,17 @@ definitions:
         type: string
       slug:
         type: string
+    type: object
+  auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest:
+    properties:
+      email_enabled:
+        type: boolean
+      in_app_enabled:
+        type: boolean
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
     type: object
   auto-store-api_internal_handlers_dto.UpdateOrderStatusRequest:
     properties:
@@ -368,6 +690,7 @@ definitions:
         - ADMIN
         - VENDOR
         - CUSTOMER
+        - MECHANIC
         type: string
     required:
     - role
@@ -386,6 +709,8 @@ definitions:
         type: string
       last_name:
         type: string
+      mechanic_profile:
+        $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileSummary'
       phone:
         type: string
       role:
@@ -487,6 +812,147 @@ definitions:
       updated_at:
         type: string
     type: object
+  auto-store-api_internal_models.ChatContextType:
+    enum:
+    - general
+    - order
+    - product
+    type: string
+    x-enum-varnames:
+    - ChatContextGeneral
+    - ChatContextOrder
+    - ChatContextProduct
+  auto-store-api_internal_models.ConversationStatus:
+    enum:
+    - open
+    - closed
+    type: string
+    x-enum-varnames:
+    - ConversationStatusOpen
+    - ConversationStatusClosed
+  auto-store-api_internal_models.MechanicDocument:
+    properties:
+      created_at:
+        type: string
+      document_type:
+        $ref: '#/definitions/auto-store-api_internal_models.MechanicDocumentType'
+      file_name:
+        type: string
+      id:
+        type: string
+      mechanic_profile_id:
+        type: string
+      review_notes:
+        type: string
+      status:
+        $ref: '#/definitions/auto-store-api_internal_models.MechanicDocumentStatus'
+      updated_at:
+        type: string
+      url:
+        type: string
+    type: object
+  auto-store-api_internal_models.MechanicDocumentStatus:
+    enum:
+    - pending
+    - approved
+    - rejected
+    type: string
+    x-enum-varnames:
+    - MechanicDocStatusPending
+    - MechanicDocStatusApproved
+    - MechanicDocStatusRejected
+  auto-store-api_internal_models.MechanicDocumentType:
+    enum:
+    - license
+    - insurance
+    - certification
+    - other
+    type: string
+    x-enum-varnames:
+    - MechanicDocLicense
+    - MechanicDocInsurance
+    - MechanicDocCertification
+    - MechanicDocOther
+  auto-store-api_internal_models.MechanicProfile:
+    properties:
+      bio:
+        type: string
+      business_name:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.MechanicDocument'
+        type: array
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      payout_configured_at:
+        type: string
+      paystack_account_name:
+        type: string
+      paystack_subaccount_code:
+        description: Paystack subaccount for installation booking payouts (split payments).
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      rating_avg:
+        type: number
+      rating_count:
+        type: integer
+      rejection_reason:
+        type: string
+      service_radius_km:
+        type: number
+      state:
+        type: string
+      status:
+        $ref: '#/definitions/auto-store-api_internal_models.MechanicProfileStatus'
+      street:
+        type: string
+      suspended_at:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/auto-store-api_internal_models.User'
+      user_id:
+        type: string
+      verified_at:
+        type: string
+    type: object
+  auto-store-api_internal_models.MechanicProfileStatus:
+    enum:
+    - pending
+    - verified
+    - suspended
+    - rejected
+    type: string
+    x-enum-varnames:
+    - MechanicStatusPending
+    - MechanicStatusVerified
+    - MechanicStatusSuspended
+    - MechanicStatusRejected
+  auto-store-api_internal_models.MessageSenderType:
+    enum:
+    - customer
+    - admin
+    - system
+    type: string
+    x-enum-varnames:
+    - MessageSenderCustomer
+    - MessageSenderAdmin
+    - MessageSenderSystem
   auto-store-api_internal_models.Product:
     properties:
       brand:
@@ -515,6 +981,10 @@ definitions:
         items:
           $ref: '#/definitions/auto-store-api_internal_models.ProductImage'
         type: array
+      installation_eligible:
+        type: boolean
+      installation_job_type_id:
+        type: string
       manufacturer_part_number:
         type: string
       name:
@@ -603,11 +1073,13 @@ definitions:
     - ADMIN
     - VENDOR
     - CUSTOMER
+    - MECHANIC
     type: string
     x-enum-varnames:
     - RoleAdmin
     - RoleVendor
     - RoleCustomer
+    - RoleMechanic
   auto-store-api_internal_models.Specification:
     properties:
       created_at:
@@ -658,6 +1130,8 @@ definitions:
         type: string
       last_name:
         type: string
+      mechanic_profile:
+        $ref: '#/definitions/auto-store-api_internal_models.MechanicProfile'
       phone:
         type: string
       role:
@@ -689,6 +1163,53 @@ definitions:
         type: integer
       year_start:
         type: integer
+    type: object
+  auto-store-api_internal_services.MechanicPayoutStatus:
+    properties:
+      account_name:
+        type: string
+      account_number_last4:
+        type: string
+      bank_code:
+        type: string
+      configured:
+        type: boolean
+      configured_at:
+        type: string
+      subaccount_code:
+        type: string
+    type: object
+  auto-store-api_internal_services.PaymentInitializeResult:
+    properties:
+      access_code:
+        type: string
+      amount:
+        type: integer
+      authorization_url:
+        type: string
+      currency:
+        type: string
+      public_key:
+        type: string
+      reference:
+        type: string
+    type: object
+  auto-store-api_internal_services.RefundResult:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      entity_id:
+        type: string
+      entity_type:
+        type: string
+      paystack_refund_id:
+        type: integer
+      status:
+        type: string
+      transaction_reference:
+        type: string
     type: object
   auto-store-api_internal_utils.APIResponse:
     properties:
@@ -736,6 +1257,185 @@ info:
   title: Auto-Store API
   version: "1.0"
 paths:
+  /api/v1/admin/conversations:
+    get:
+      parameters:
+      - description: open or closed
+        in: query
+        name: status
+        type: string
+      - description: Guests only
+        in: query
+        name: guest_only
+        type: boolean
+      - description: Unread only
+        in: query
+        name: unread_only
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Admin support inbox
+      tags:
+      - support-chat
+  /api/v1/admin/installation/bookings/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.RefundResult'
+      security:
+      - BearerAuth: []
+      summary: 'Admin: refund installation booking via Paystack'
+      tags:
+      - admin
+  /api/v1/admin/mechanics:
+    get:
+      parameters:
+      - description: Filter by status (pending, verified, suspended, rejected)
+        in: query
+        name: status
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List mechanic profiles (admin)
+      tags:
+      - mechanics
+  /api/v1/admin/mechanics/{userId}/reject:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicAdminActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject a mechanic application (admin)
+      tags:
+      - mechanics
+  /api/v1/admin/mechanics/{userId}/suspend:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Optional reason
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicAdminActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Suspend a mechanic (admin)
+      tags:
+      - mechanics
+  /api/v1/admin/mechanics/{userId}/verify:
+    put:
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify a mechanic application (admin)
+      tags:
+      - mechanics
   /api/v1/admin/orders:
     get:
       parameters:
@@ -761,6 +1461,28 @@ paths:
       security:
       - BearerAuth: []
       summary: List all orders (Admin)
+      tags:
+      - admin
+  /api/v1/admin/orders/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.RefundResult'
+      security:
+      - BearerAuth: []
+      summary: 'Admin: refund order via Paystack'
       tags:
       - admin
   /api/v1/admin/orders/{id}/status:
@@ -809,7 +1531,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: Role (ADMIN, VENDOR, CUSTOMER)
+      - description: Role (ADMIN, VENDOR, CUSTOMER, MECHANIC)
         in: body
         name: body
         required: true
@@ -1240,6 +1962,462 @@ paths:
       summary: Get products in category
       tags:
       - categories
+  /api/v1/chat/guest-session:
+    post:
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.GuestSessionResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Create guest chat session
+      tags:
+      - support-chat
+  /api/v1/chat/guest-session/refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.GuestSessionResponse'
+      security:
+      - BearerAuth: []
+      summary: Refresh guest chat token
+      tags:
+      - support-chat
+  /api/v1/conversations:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Optional context
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.CreateConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse'
+      security:
+      - BearerAuth: []
+      summary: Get or create open support conversation
+      tags:
+      - support-chat
+  /api/v1/conversations/{id}/messages:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.SendChatMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ChatMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Send a chat message
+      tags:
+      - support-chat
+  /api/v1/conversations/link-guest:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Guest token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.LinkGuestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.LinkGuestResponse'
+      security:
+      - BearerAuth: []
+      summary: Link guest chat history to logged-in user
+      tags:
+      - support-chat
+  /api/v1/conversations/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ConversationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current open conversation
+      tags:
+      - support-chat
+  /api/v1/installation/bookings/{id}/pay:
+    post:
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.PaymentInitializeResult'
+      security:
+      - BearerAuth: []
+      summary: Initialize Paystack checkout for an installation booking
+      tags:
+      - payments
+  /api/v1/installation/bookings/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional partial amount and notes
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.RefundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.RefundResult'
+      security:
+      - BearerAuth: []
+      summary: Refund a paid installation booking via Paystack
+      tags:
+      - payments
+  /api/v1/mechanic/apply:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Application
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicApplyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Apply to become a verified mechanic
+      tags:
+      - mechanics
+  /api/v1/mechanic/documents:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Document
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicDocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Add a verification document to mechanic profile
+      tags:
+      - mechanics
+  /api/v1/mechanic/documents/{id}:
+    delete:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove a verification document
+      tags:
+      - mechanics
+  /api/v1/mechanic/payout:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.MechanicPayoutStatus'
+      security:
+      - BearerAuth: []
+      summary: Get Paystack payout / subaccount status
+      tags:
+      - mechanics
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bank details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicPayoutSetupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.MechanicPayoutStatus'
+      security:
+      - BearerAuth: []
+      summary: Register or update mechanic bank account for Paystack split payouts
+      tags:
+      - mechanics
+  /api/v1/mechanic/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's mechanic profile
+      tags:
+      - mechanics
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile updates
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicUpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update current user's mechanic profile
+      tags:
+      - mechanics
+  /api/v1/mechanics:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+            type: array
+      summary: List verified mechanics
+      tags:
+      - mechanics
+  /api/v1/mechanics/{id}:
+    get:
+      parameters:
+      - description: Mechanic profile ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.MechanicProfileResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      summary: Get a verified mechanic's public profile
+      tags:
+      - mechanics
+  /api/v1/notifications:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Unread only
+        in: query
+        name: unread_only
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/auto-store-api_internal_handlers_dto.NotificationResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List in-app notifications
+      tags:
+      - notifications
+  /api/v1/notifications/{id}/read:
+    patch:
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark one in-app notification as read
+      tags:
+      - notifications
+  /api/v1/notifications/read-all:
+    patch:
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Mark all in-app notifications as read
+      tags:
+      - notifications
+  /api/v1/notifications/unread-count:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UnreadCountResponse'
+      security:
+      - BearerAuth: []
+      summary: Get unread in-app notification count
+      tags:
+      - notifications
   /api/v1/orders:
     get:
       parameters:
@@ -1339,6 +2517,101 @@ paths:
       summary: Cancel order
       tags:
       - orders
+  /api/v1/orders/{id}/pay:
+    post:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.PaymentInitializeResult'
+      security:
+      - BearerAuth: []
+      summary: Initialize Paystack checkout for an order
+      tags:
+      - payments
+  /api/v1/orders/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional partial amount and notes
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.RefundRequest'
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.RefundResult'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Refund a paid order via Paystack
+      tags:
+      - payments
+      - payments
+  /api/v1/payments/banks:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Optional partial amount and notes
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.RefundRequest'
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_services.RefundResult'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Refund a paid order via Paystack
+      tags:
+      - payments
+      - payments
+  /api/v1/payments/verify:
+    get:
+      parameters:
+      - description: Paystack reference
+        in: query
+        name: reference
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Verify a Paystack transaction by reference
+      tags:
+      - payments
   /api/v1/products:
     get:
       parameters:
@@ -1354,11 +2627,28 @@ paths:
         in: query
         name: category
         type: string
+      - description: Search text (matches name, description, sku, part number)
+        in: query
+        name: search
+        type: string
+      - description: Minimum price (inclusive)
+        in: query
+        name: min
+        type: number
+      - description: Maximum price (inclusive); if min and max are both set, max must
+          be greater than min
+        in: query
+        name: max
+        type: number
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+        "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
       summary: List products
@@ -1880,6 +3170,42 @@ paths:
       summary: Update address
       tags:
       - users
+  /api/v1/users/me/notification-preferences:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.NotificationPreferenceResponse'
+      security:
+      - BearerAuth: []
+      summary: Get notification preferences
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Preferences
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.NotificationPreferenceResponse'
+      security:
+      - BearerAuth: []
+      summary: Update notification preferences
+      tags:
+      - notifications
   /api/v1/wishlist:
     get:
       produces:
@@ -1941,6 +3267,18 @@ paths:
       summary: Remove product from wishlist
       tags:
       - wishlist
+  /webhooks/paystack:
+    post:
+      consumes:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      summary: Paystack webhook (charge.success)
+      tags:
+      - payments
 schemes:
 - http
 - https
