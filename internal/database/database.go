@@ -126,5 +126,8 @@ func AutoMigrate(db *gorm.DB) error {
 	if err := SeedVehicleSystems(db); err != nil {
 		return err
 	}
-	return SeedPartLabelTaxonomies(db)
+	if err := SeedPartLabelTaxonomies(db); err != nil {
+		return err
+	}
+	return SeedSampleDiagrams(db)
 }

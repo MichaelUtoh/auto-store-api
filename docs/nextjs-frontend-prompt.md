@@ -150,7 +150,7 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 
 **Community Q&A (full UI spec):** [nextjs-community-qa-prompt.md](./nextjs-community-qa-prompt.md)
 
-**Visual Part Finder (API reference):** [part-finder.md](./part-finder.md)
+**Visual Part Finder (full UI spec):** [nextjs-part-finder-prompt.md](./nextjs-part-finder-prompt.md)
 
 **Installation marketplace (full UI spec):** [nextjs-installation-marketplace-prompt.md](./nextjs-installation-marketplace-prompt.md)
 

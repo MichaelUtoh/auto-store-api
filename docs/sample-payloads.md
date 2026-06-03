@@ -1238,7 +1238,13 @@ Sets `status` to `closed`; thread no longer appears in public list.
 
 ## Visual Part Finder
 
-See [part-finder.md](./part-finder.md).
+See [part-finder.md](./part-finder.md). Frontend: [nextjs-part-finder-prompt.md](./nextjs-part-finder-prompt.md).
+
+**Demo diagram (auto-seeded):** `2018 Toyota Camry — Front Brake Assembly` · system `brakes` · years 2015–2020. List with:
+
+```
+GET /diagrams?make=Toyota&model=Camry&year=2018&system=brakes
+```
 
 ### GET /vehicle-systems
 

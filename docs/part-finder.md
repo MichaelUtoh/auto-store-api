@@ -96,3 +96,7 @@ Upload diagram images via `POST /api/v1/upload/images`, then reference URLs in d
 3. Flutter client: camera → `POST /part-identification` → product/cart/install flows.
 
 See [sample-payloads.md](./sample-payloads.md#visual-part-finder) for request/response examples.
+
+**Next.js UI spec:** [nextjs-part-finder-prompt.md](./nextjs-part-finder-prompt.md)
+
+**Demo seed:** On migrate, the API seeds **2015–2020 Toyota Camry · Front Brake Assembly** with 9 hotspots. Test with `GET /diagrams?make=Toyota&model=Camry&year=2018&system=brakes`. Hotspots link to products when SKU `BP-CAMRY-F` or OEM `ST-1234` + Camry compatibility exist in the catalog.
