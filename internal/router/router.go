@@ -63,7 +63,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	installRepo := repositories.NewInstallationRepository(db)
 	notifRepo := repositories.NewNotificationRepository(db)
 	questionRepo := repositories.NewQuestionRepository(db)
-	diagramRepo := repositories.NewDiagramRepository(db)
 	chatRepo := repositories.NewChatRepository(db)
 
 	authSvc := services.NewAuthService(userRepo, jwt, services.AuthConfig{
@@ -85,7 +84,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	paymentSvc := services.NewPaymentService(cfg.Paystack, orderRepo, installRepo, mechanicRepo, userRepo, db, log)
 	installSvc := services.NewInstallationService(installRepo, orderRepo, productRepo, mechanicRepo, paymentSvc, notifier, log, db)
 	questionSvc := services.NewQuestionService(questionRepo, productRepo, categoryRepo, notifier, db)
-	diagramSvc := services.NewDiagramService(diagramRepo, productRepo, db)
 	chatSvc := services.NewChatService(chatRepo, userRepo, guestJWT, cfg.Chat, chatPublisher, notifier, log)
 
 	authH := handlers.NewAuthHandler(authSvc)
@@ -101,7 +99,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	paymentH := handlers.NewPaymentHandler(paymentSvc, payoutSvc)
 	notifH := handlers.NewNotificationHandler(notifSvc)
 	questionH := handlers.NewQuestionHandler(questionSvc)
-	diagramH := handlers.NewDiagramHandler(diagramSvc)
 
 	var store storage.Storage
 	if s3Store, err := storage.NewS3(storage.S3Config{
@@ -115,8 +112,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		store = s3Store
 	}
 	uploadH := handlers.NewUploadHandler(store, cfg.Upload.AllowedTypes, cfg.Upload.MaxSize)
-	partIDSvc := services.NewPartIdentificationService(diagramRepo, diagramSvc, store, db)
-	partIDH := handlers.NewPartIdentificationHandler(partIDSvc)
 	chatH := handlers.NewChatHandler(chatSvc, jwt, guestJWT)
 	chatWSH := handlers.NewChatWSHandler(chatHub, chatSvc, jwt, guestJWT)
 
@@ -149,11 +144,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		api.GET("/mechanics", mechanicH.ListVerified)
 		api.GET("/mechanics/:id", mechanicH.GetPublicProfile)
 		api.GET("/installation/job-types", installH.ListJobTypes)
-		api.GET("/vehicle-systems", diagramH.ListVehicleSystems)
-		api.GET("/diagrams", diagramH.List)
-		api.GET("/diagrams/:id", diagramH.Get)
-		api.GET("/diagrams/:id/hotspots", diagramH.ListHotspots)
-		api.GET("/diagrams/:id/hotspots/:hotspotId/products", diagramH.HotspotProducts)
 
 		api.POST("/chat/guest-session", chatH.CreateGuestSession)
 		api.POST("/chat/guest-session/refresh", middleware.GuestAuthRequired(guestJWT), chatH.RefreshGuestSession)
@@ -179,7 +169,6 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			protected.POST("/questions/:id/answers", middleware.RequireVerifiedMechanic(db), questionH.PostAnswer)
 			protected.PATCH("/questions/:id/accept-answer/:answerId", questionH.AcceptAnswer)
 			protected.PATCH("/questions/:id/close", questionH.Close)
-			protected.POST("/part-identification", partIDH.Identify)
 			protected.GET("/cart", cartH.Get)
 			protected.POST("/cart/items", cartH.AddItem)
 			protected.PUT("/cart/items/:id", cartH.UpdateItem)
@@ -257,19 +246,11 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminProducts.POST("/products/:id/images", productH.AddImages)
 			adminProducts.DELETE("/products/:id/images/:imageId", productH.DeleteProductImage)
 			adminProducts.POST("/products/:id/compatibility", productH.AddCompatibilities)
-			adminProducts.POST("/diagrams", diagramH.Create)
-			adminProducts.PUT("/diagrams/:id", diagramH.Update)
-			adminProducts.POST("/diagrams/:id/hotspots", diagramH.CreateHotspot)
-			adminProducts.PUT("/diagrams/:id/hotspots/:hotspotId", diagramH.UpdateHotspot)
-			adminProducts.POST("/diagrams/:id/hotspots/:hotspotId/products", diagramH.LinkProduct)
-			adminProducts.DELETE("/diagrams/:id/hotspots/:hotspotId/products/:productId", diagramH.UnlinkProduct)
 		}
 		adminOnly := api.Group("")
 		adminOnly.Use(middleware.AuthRequired(jwt, db), middleware.RequireRole(models.RoleAdmin))
 		{
 			adminOnly.DELETE("/products/:id", productH.Delete)
-			adminOnly.DELETE("/diagrams/:id", diagramH.Delete)
-			adminOnly.DELETE("/diagrams/:id/hotspots/:hotspotId", diagramH.DeleteHotspot)
 			adminOnly.POST("/categories", categoryH.Create)
 			adminOnly.PUT("/categories/:id", categoryH.Update)
 			adminOnly.DELETE("/categories/:id", categoryH.Delete)

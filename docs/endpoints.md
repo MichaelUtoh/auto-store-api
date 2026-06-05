@@ -177,29 +177,6 @@ Email delivery is async via Redis queue + `cmd/worker`. See [notifications.md](.
 
 ---
 
-## Visual Part Finder (`/api/v1/diagrams`, `/api/v1/part-identification`)
-
-See [part-finder.md](./part-finder.md).
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/v1/vehicle-systems` | No | List vehicle systems (brakes, suspension, …) |
-| GET | `/api/v1/diagrams` | No | List diagrams (`make`, `model`, `year`, `system`, `page`, `limit`) |
-| GET | `/api/v1/diagrams/:id` | No | Diagram detail (`?include_hotspots=true`) |
-| GET | `/api/v1/diagrams/:id/hotspots` | No | Hotspots for diagram |
-| GET | `/api/v1/diagrams/:id/hotspots/:hotspotId/products` | No | Products for hotspot (`?year=` optional) |
-| POST | `/api/v1/part-identification` | Yes | AR/CV identify parts (multipart image + vehicle) |
-| POST | `/api/v1/diagrams` | Admin/Vendor | Create diagram |
-| PUT | `/api/v1/diagrams/:id` | Admin/Vendor | Update diagram |
-| POST | `/api/v1/diagrams/:id/hotspots` | Admin/Vendor | Add hotspot |
-| PUT | `/api/v1/diagrams/:id/hotspots/:hotspotId` | Admin/Vendor | Update hotspot |
-| POST | `/api/v1/diagrams/:id/hotspots/:hotspotId/products` | Admin/Vendor | Link product to hotspot |
-| DELETE | `/api/v1/diagrams/:id/hotspots/:hotspotId/products/:productId` | Admin/Vendor | Unlink product |
-| DELETE | `/api/v1/diagrams/:id` | Admin | Delete diagram |
-| DELETE | `/api/v1/diagrams/:id/hotspots/:hotspotId` | Admin | Delete hotspot |
-
----
-
 ## Community Q&A (`/api/v1/questions`)
 
 See [community-qa.md](./community-qa.md).
@@ -266,9 +243,9 @@ Real-time customer/guest ↔ admin chat. Full spec: [support-chat.md](./support-
 
 ## Summary
 
-- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews/questions GET, categories list/get/products, verified mechanics list/get, installation job types, community Q&A list/detail, vehicle systems, diagrams list/detail/hotspots/products, guest chat session (planned).
-- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, notifications, notification preferences, create product review, ask/accept/close Q&A questions, part identification, mechanic apply/profile/documents, installation quotes/bookings, link guest chat on login (`POST /conversations/link-guest`).
+- **Public:** Health, docs, auth (except logout), products list/search/get/compatibility/reviews/questions GET, categories list/get/products, verified mechanics list/get, installation job types, community Q&A list/detail, guest chat session (planned).
+- **Authenticated (any role):** Logout, cart, orders (create/list/get/cancel), profile, addresses, wishlist, notifications, notification preferences, create product review, ask/accept/close Q&A questions, mechanic apply/profile/documents, installation quotes/bookings, link guest chat on login (`POST /conversations/link-guest`).
 - **Flexible auth (user JWT or guest token):** Support chat conversations and messages, WebSocket `/ws/chat`.
-- **Admin or Vendor:** Products create/batch/update, product images, product compatibility, diagrams and hotspots CRUD, hotspot product links.
+- **Admin or Vendor:** Products create/batch/update, product images, product compatibility.
 - **Admin only:** Product delete, categories CRUD, admin orders list/status, admin user role update, mechanic verification workflow, support chat inbox.
 - **Mechanic (role MECHANIC, verified profile):** Installation quote responses, bookings, service catalog, Q&A answers.

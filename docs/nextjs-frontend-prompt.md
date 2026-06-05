@@ -144,13 +144,8 @@ Use this for building the client. All paths are relative to base `NEXT_PUBLIC_AP
 | Installation quotes | POST / GET | `/installation/quotes`, `/installation/quotes/:id` | Yes | See installation prompt |
 | Installation bookings | POST / GET / PATCH | `/installation/bookings`, `.../cancel` | Yes | |
 | Mechanic install quotes/bookings | GET / PATCH / PUT | `/mechanic/installation/...` | Verified mechanic | |
-| Vehicle systems | GET | `/vehicle-systems` | No | Part finder filters |
-| Diagrams | GET | `/diagrams`, `/diagrams/:id`, `.../hotspots`, `.../products` | No | Interactive exploded views |
-| Part identification | POST | `/part-identification` | Yes | Multipart image + vehicle (AR) |
 
 **Community Q&A (full UI spec):** [nextjs-community-qa-prompt.md](./nextjs-community-qa-prompt.md)
-
-**Visual Part Finder (full UI spec):** [nextjs-part-finder-prompt.md](./nextjs-part-finder-prompt.md)
 
 **Installation marketplace (full UI spec):** [nextjs-installation-marketplace-prompt.md](./nextjs-installation-marketplace-prompt.md)
 
