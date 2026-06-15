@@ -78,6 +78,10 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 			utils.JSONBadRequest(c, "insufficient stock")
 			return
 		}
+		if err == services.ErrOutOfStock {
+			utils.JSONBadRequest(c, "out of stock")
+			return
+		}
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}

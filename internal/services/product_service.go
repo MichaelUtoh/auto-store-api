@@ -63,6 +63,8 @@ func (s *ProductService) CreateBatch(items []CreateProductInput) (created []Batc
 			Price:              in.Price,
 			CostPrice:          in.CostPrice,
 			StockQuantity:      in.StockQuantity,
+			LowStockThreshold:  in.LowStockThreshold,
+			VendorID:           in.VendorID,
 			Weight:             in.Weight,
 			Dimensions:         in.Dimensions,
 			Condition:          in.Condition,
@@ -98,6 +100,8 @@ type CreateProductInput struct {
 	Price              float64
 	CostPrice          float64
 	StockQuantity      int
+	LowStockThreshold  int
+	VendorID           *uuid.UUID
 	Weight             float64
 	Dimensions         string
 	Condition          models.ProductCondition
@@ -149,7 +153,7 @@ func (s *ProductService) Delete(id uuid.UUID) error {
 	return s.productRepo.Delete(id)
 }
 
-func (s *ProductService) List(page, limit int, categorySlug, search string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
+func (s *ProductService) List(page, limit int, categorySlug, search, sort string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -157,7 +161,7 @@ func (s *ProductService) List(page, limit int, categorySlug, search string, minP
 		limit = 20
 	}
 	offset := (page - 1) * limit
-	return s.productRepo.List(offset, limit, categorySlug, search, minPrice, maxPrice)
+	return s.productRepo.List(offset, limit, categorySlug, search, sort, minPrice, maxPrice)
 }
 
 func (s *ProductService) Search(params repositories.SearchParams) (*repositories.SearchResult, error) {

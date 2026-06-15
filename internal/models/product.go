@@ -25,6 +25,10 @@ type Product struct {
 	Price                 float64           `gorm:"type:decimal(12,2);not null" json:"price"`
 	CostPrice             float64           `gorm:"column:cost_price;type:decimal(12,2)" json:"cost_price"`
 	StockQuantity         int               `gorm:"column:stock_quantity;default:0" json:"stock_quantity"`
+	LowStockThreshold     int               `gorm:"column:low_stock_threshold;default:5" json:"low_stock_threshold"`
+	LowStockNotified      bool              `gorm:"column:low_stock_notified;default:false" json:"-"`
+	LowStockAlertCycle    int               `gorm:"column:low_stock_alert_cycle;default:0" json:"-"`
+	VendorID              *uuid.UUID        `gorm:"type:uuid;column:vendor_id;index" json:"vendor_id,omitempty"`
 	Weight                float64           `gorm:"type:decimal(10,2)" json:"weight"`
 	Dimensions            string            `gorm:"type:varchar(100)" json:"dimensions"`
 	Condition             ProductCondition  `gorm:"type:varchar(20);default:'new'" json:"condition"`
@@ -49,7 +53,28 @@ func (p *Product) BeforeCreate(tx *gorm.DB) error {
 	if p.ID == uuid.Nil {
 		p.ID = uuid.New()
 	}
+	if p.LowStockThreshold <= 0 {
+		p.LowStockThreshold = DefaultLowStockThreshold
+	}
 	return nil
+}
+
+func (p *Product) InStock() bool {
+	return p.StockQuantity > 0
+}
+
+func (p *Product) StockStatus() string {
+	if p.StockQuantity <= 0 {
+		return "out_of_stock"
+	}
+	threshold := p.LowStockThreshold
+	if threshold <= 0 {
+		threshold = DefaultLowStockThreshold
+	}
+	if p.StockQuantity <= threshold {
+		return "low_stock"
+	}
+	return "in_stock"
 }
 
 type Category struct {

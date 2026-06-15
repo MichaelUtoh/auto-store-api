@@ -50,9 +50,24 @@ func (r *ProductRepository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&models.Product{}, "id = ?", id).Error
 }
 
+func applyProductSort(q *gorm.DB, sort string) *gorm.DB {
+	switch sort {
+	case "price_asc":
+		return q.Order("price ASC")
+	case "price_desc":
+		return q.Order("price DESC")
+	case "newest":
+		return q.Order("created_at DESC")
+	case "rating", "popularity":
+		return q.Order("created_at DESC")
+	default:
+		return q.Order("created_at DESC")
+	}
+}
+
 // List returns a page of products, optionally filtered by category slug, search string,
 // and/or min/max price (inclusive on each bound when set).
-func (r *ProductRepository) List(offset, limit int, categorySlug, search string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
+func (r *ProductRepository) List(offset, limit int, categorySlug, search, sort string, minPrice, maxPrice *float64) ([]models.Product, int64, error) {
 	var products []models.Product
 	var total int64
 	q := r.db.Model(&models.Product{}).Preload("Images")
@@ -82,7 +97,7 @@ func (r *ProductRepository) List(offset, limit int, categorySlug, search string,
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	err := q.Order("created_at DESC").Offset(offset).Limit(limit).Find(&products).Error
+	err := applyProductSort(q, sort).Offset(offset).Limit(limit).Find(&products).Error
 	return products, total, err
 }
 

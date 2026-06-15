@@ -34,7 +34,7 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/products` | No | List products (paginated; query: page, limit, category, search, **min**, **max** price; if both min and max are set, max must be **greater than** min). |
+| GET | `/api/v1/products` | No | List products (paginated; query: page, limit, category, search, **min**, **max** price, **sort**; if both min and max are set, max must be **greater than** min). |
 | GET | `/api/v1/products/search` | No | Search products (query: q, category, tags, make, model, year, minPrice, maxPrice, condition, brand, sort, page, limit). |
 | GET | `/api/v1/products/:id` | No | Get product by ID. |
 | GET | `/api/v1/products/:id/compatibility` | No | Get vehicle compatibility for product. |
@@ -47,6 +47,22 @@ Protected routes: send `Authorization: Bearer <access_token>`.
 | DELETE | `/api/v1/products/:id/images/:imageId` | Admin/Vendor | Delete one image (`imageId` = product_images row UUID). |
 | POST | `/api/v1/products/:id/compatibility` | Admin/Vendor | Add vehicle compatibilities. |
 | DELETE | `/api/v1/products/:id` | Admin | Delete product. |
+
+Public product responses include `in_stock` (bool) and `stock_status` (`in_stock`, `low_stock`, or `out_of_stock`). Out-of-stock products remain visible but cannot be added to cart.
+
+---
+
+## Inventory (`/api/v1/admin/inventory`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/admin/inventory/low-stock` | Admin/Vendor | List products at or below their low-stock threshold. Vendors see only their products. |
+| GET | `/api/v1/admin/inventory/products/:id/movements` | Admin/Vendor | Paginated stock movement history for a product. |
+| PATCH | `/api/v1/admin/inventory/products/:id/stock` | Admin/Vendor | Adjust stock (body: `delta`, optional `reason`, `notes`). |
+| PUT | `/api/v1/admin/inventory/products/:id/settings` | Admin/Vendor | Set `low_stock_threshold` for a product. |
+| POST | `/api/v1/admin/inventory/bulk-threshold` | Admin | Bulk-set threshold for all products, a category, or specific product IDs. |
+
+Low-stock alerts notify all admins and the product vendor (if assigned). Alerts fire once per threshold crossing until stock is restocked above the threshold.
 
 ---
 

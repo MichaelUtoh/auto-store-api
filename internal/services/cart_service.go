@@ -31,6 +31,9 @@ func (s *CartService) AddItem(userID, productID uuid.UUID, quantity int) (*model
 	if err != nil || product == nil {
 		return nil, ErrProductNotFound
 	}
+	if product.StockQuantity <= 0 {
+		return nil, ErrOutOfStock
+	}
 	if product.StockQuantity < quantity {
 		return nil, ErrInsufficientStock
 	}

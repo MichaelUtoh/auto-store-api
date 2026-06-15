@@ -50,6 +50,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	chat.StartRedisSubscriber(chatHub)
 	chatPublisher := &chat.RedisPublisher{Hub: chatHub}
 
+	inventoryRepo := repositories.NewInventoryRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	productRepo := repositories.NewProductRepository(db)
 	categoryRepo := repositories.NewCategoryRepository(db)
@@ -72,13 +73,14 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	productSvc := services.NewProductService(productRepo, categoryRepo, compatRepo, db)
 	categorySvc := services.NewCategoryService(categoryRepo, db)
 	cartSvc := services.NewCartService(cartRepo, productRepo, db)
-	orderSvc := services.NewOrderService(orderRepo, cartRepo, addressRepo, productRepo, db)
-	userSvc := services.NewUserService(userRepo, addressRepo, db)
-	wishlistSvc := services.NewWishlistService(wishlistRepo, db)
-	reviewSvc := services.NewReviewService(reviewRepo, orderRepo, productRepo, db)
 	emailSender := email.NewSender(cfg.Email)
 	notifSvc := services.NewNotificationService(notifRepo, userRepo, cache.Client, emailSender, cfg, log)
 	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL, emailSender)
+	inventorySvc := services.NewInventoryService(inventoryRepo, productRepo, userRepo, notifier, db)
+	orderSvc := services.NewOrderService(orderRepo, cartRepo, addressRepo, productRepo, inventorySvc, db)
+	userSvc := services.NewUserService(userRepo, addressRepo, db)
+	wishlistSvc := services.NewWishlistService(wishlistRepo, db)
+	reviewSvc := services.NewReviewService(reviewRepo, orderRepo, productRepo, db)
 	mechanicSvc := services.NewMechanicService(mechanicRepo, installRepo, userRepo, notifier, log, db)
 	payoutSvc := services.NewMechanicPayoutService(cfg.Paystack, mechanicRepo, userRepo, log)
 	paymentSvc := services.NewPaymentService(cfg.Paystack, orderRepo, installRepo, mechanicRepo, userRepo, db, log)
@@ -87,7 +89,8 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 	chatSvc := services.NewChatService(chatRepo, userRepo, guestJWT, cfg.Chat, chatPublisher, notifier, log)
 
 	authH := handlers.NewAuthHandler(authSvc)
-	productH := handlers.NewProductHandler(productSvc)
+	productH := handlers.NewProductHandler(productSvc, inventorySvc)
+	inventoryH := handlers.NewInventoryHandler(inventorySvc)
 	categoryH := handlers.NewCategoryHandler(categorySvc, productSvc)
 	cartH := handlers.NewCartHandler(cartSvc)
 	orderH := handlers.NewOrderHandler(orderSvc)
@@ -246,6 +249,10 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminProducts.POST("/products/:id/images", productH.AddImages)
 			adminProducts.DELETE("/products/:id/images/:imageId", productH.DeleteProductImage)
 			adminProducts.POST("/products/:id/compatibility", productH.AddCompatibilities)
+			adminProducts.GET("/admin/inventory/low-stock", inventoryH.ListLowStock)
+			adminProducts.GET("/admin/inventory/products/:id/movements", inventoryH.ListMovements)
+			adminProducts.PATCH("/admin/inventory/products/:id/stock", inventoryH.AdjustStock)
+			adminProducts.PUT("/admin/inventory/products/:id/settings", inventoryH.UpdateSettings)
 		}
 		adminOnly := api.Group("")
 		adminOnly.Use(middleware.AuthRequired(jwt, db), middleware.RequireRole(models.RoleAdmin))
@@ -265,6 +272,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminOnly.PUT("/admin/mechanics/:userId/reject", mechanicH.Reject)
 			adminOnly.GET("/admin/conversations", chatH.AdminList)
 			adminOnly.GET("/admin/conversations/unread-count", chatH.AdminUnreadCount)
+			adminOnly.POST("/admin/inventory/bulk-threshold", inventoryH.BulkSetThreshold)
 		}
 	}
 

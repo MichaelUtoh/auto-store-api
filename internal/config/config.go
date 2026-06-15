@@ -25,6 +25,7 @@ type Config struct {
 	Notifications NotificationsConfig
 	Paystack      PaystackConfig
 	Chat          ChatConfig
+	Inventory     InventoryConfig
 }
 
 // ChatConfig holds support chat settings.
@@ -54,9 +55,13 @@ type AppConfig struct {
 }
 
 type NotificationsConfig struct {
-	WorkerEnabled    bool
-	MaxRetries       int
+	WorkerEnabled     bool
+	MaxRetries        int
 	DequeueTimeoutSec int
+}
+
+type InventoryConfig struct {
+	LowStockScanIntervalSec int
 }
 
 type ServerConfig struct {
@@ -200,6 +205,9 @@ func Load() (*Config, error) {
 			WorkerEnabled:     getEnv("NOTIFICATIONS_WORKER_ENABLED", "true") == "true",
 			MaxRetries:        getEnvInt("NOTIFICATIONS_MAX_RETRIES", 5),
 			DequeueTimeoutSec: getEnvInt("NOTIFICATIONS_DEQUEUE_TIMEOUT_SEC", 5),
+		},
+		Inventory: InventoryConfig{
+			LowStockScanIntervalSec: getEnvInt("INVENTORY_LOW_STOCK_SCAN_INTERVAL_SEC", 3600),
 		},
 		Paystack: func() PaystackConfig {
 			secret := getEnv("PAYSTACK_SECRET_KEY", "")

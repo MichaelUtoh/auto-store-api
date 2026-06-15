@@ -98,18 +98,7 @@ func (r *ProductRepository) Search(params SearchParams) (*SearchResult, error) {
 		return nil, err
 	}
 
-	switch params.Sort {
-	case "price_asc":
-		q = q.Order("price ASC")
-	case "price_desc":
-		q = q.Order("price DESC")
-	case "newest":
-		q = q.Order("created_at DESC")
-	case "rating", "popularity":
-		q = q.Order("created_at DESC")
-	default:
-		q = q.Order("created_at DESC")
-	}
+	q = applyProductSort(q, params.Sort)
 
 	offset := (params.Page - 1) * params.Limit
 	if offset < 0 {

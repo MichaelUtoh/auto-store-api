@@ -49,8 +49,12 @@ func main() {
 
 	notifRepo := repositories.NewNotificationRepository(database.DB)
 	userRepo := repositories.NewUserRepository(database.DB)
+	productRepo := repositories.NewProductRepository(database.DB)
+	inventoryRepo := repositories.NewInventoryRepository(database.DB)
 	emailSender := email.NewSender(cfg.Email)
 	notifSvc := services.NewNotificationService(notifRepo, userRepo, redisClient, emailSender, cfg, logger.Log)
+	notifier := services.NewNotifier(notifSvc, cfg.App.FrontendURL, emailSender)
+	inventorySvc := services.NewInventoryService(inventoryRepo, productRepo, userRepo, notifier, database.DB)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -61,6 +65,7 @@ func main() {
 	}
 
 	go pollPending(ctx, notifSvc)
+	go pollLowStock(ctx, inventorySvc, cfg.Inventory.LowStockScanIntervalSec)
 
 	go func() {
 		quit := make(chan os.Signal, 1)
@@ -116,6 +121,27 @@ func pollPending(ctx context.Context, notifSvc *services.NotificationService) {
 				logger.Log.Warn("poll pending notifications failed", zap.Error(err))
 			} else if n > 0 {
 				logger.Log.Info("processed pending notifications from database poll", zap.Int("count", n))
+			}
+		}
+	}
+}
+
+func pollLowStock(ctx context.Context, inventorySvc *services.InventoryService, intervalSec int) {
+	if intervalSec <= 0 {
+		intervalSec = 3600
+	}
+	ticker := time.NewTicker(time.Duration(intervalSec) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			n, err := inventorySvc.ScanLowStock(ctx)
+			if err != nil {
+				logger.Log.Warn("low stock scan failed", zap.Error(err))
+			} else if n > 0 {
+				logger.Log.Info("low stock alerts triggered by scheduled scan", zap.Int("count", n))
 			}
 		}
 	}

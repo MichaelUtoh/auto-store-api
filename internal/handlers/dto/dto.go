@@ -98,6 +98,8 @@ type CreateProductRequest struct {
 	Price              float64     `json:"price" binding:"required,gt=0"`
 	CostPrice          float64     `json:"cost_price" binding:"gte=0"`
 	StockQuantity      int         `json:"stock_quantity" binding:"gte=0"`
+	LowStockThreshold  int         `json:"low_stock_threshold" binding:"omitempty,gte=0"`
+	VendorID           *uuid.UUID  `json:"vendor_id"`
 	Weight             float64     `json:"weight" binding:"gte=0"`
 	Dimensions         string      `json:"dimensions" binding:"max=100"`
 	Condition          string      `json:"condition" binding:"omitempty,oneof=new refurbished used"`
@@ -138,6 +140,8 @@ type UpdateProductRequest struct {
 	Price              *float64    `json:"price"`
 	CostPrice          *float64    `json:"cost_price"`
 	StockQuantity      *int        `json:"stock_quantity"`
+	LowStockThreshold  *int        `json:"low_stock_threshold"`
+	VendorID           *uuid.UUID  `json:"vendor_id"`
 	Weight             *float64    `json:"weight"`
 	Dimensions         *string     `json:"dimensions"`
 	Condition          *string     `json:"condition"`
@@ -171,6 +175,49 @@ func (u *UpdateProductImages) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	return fmt.Errorf("images must be an array of objects or array of url strings")
+}
+
+// ProductResponse is the public product shape with computed stock fields.
+type ProductResponse struct {
+	models.Product
+	InStock     bool   `json:"in_stock"`
+	StockStatus string `json:"stock_status"`
+}
+
+func ProductToResponse(p *models.Product) ProductResponse {
+	if p == nil {
+		return ProductResponse{}
+	}
+	return ProductResponse{
+		Product:     *p,
+		InStock:     p.InStock(),
+		StockStatus: p.StockStatus(),
+	}
+}
+
+func ProductsToResponse(products []models.Product) []ProductResponse {
+	out := make([]ProductResponse, len(products))
+	for i := range products {
+		out[i] = ProductToResponse(&products[i])
+	}
+	return out
+}
+
+// Inventory
+type AdjustStockRequest struct {
+	Delta  int    `json:"delta" binding:"required,ne=0"`
+	Reason string `json:"reason" binding:"omitempty,oneof=restock adjustment refund cancel"`
+	Notes  string `json:"notes"`
+}
+
+type UpdateInventorySettingsRequest struct {
+	LowStockThreshold int `json:"low_stock_threshold" binding:"gte=0"`
+}
+
+type BulkThresholdRequest struct {
+	Threshold  int         `json:"threshold" binding:"required,gte=0"`
+	CategoryID *uuid.UUID  `json:"category_id"`
+	ProductIDs []uuid.UUID `json:"product_ids"`
 }
 
 type SearchProductsQuery struct {

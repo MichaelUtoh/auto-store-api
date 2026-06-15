@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"auto-store-api/internal/handlers/dto"
+	"auto-store-api/internal/middleware"
 	"auto-store-api/internal/models"
 	"auto-store-api/internal/repositories"
 	"auto-store-api/internal/services"
@@ -17,11 +18,12 @@ import (
 )
 
 type ProductHandler struct {
-	product *services.ProductService
+	product   *services.ProductService
+	inventory *services.InventoryService
 }
 
-func NewProductHandler(product *services.ProductService) *ProductHandler {
-	return &ProductHandler{product: product}
+func NewProductHandler(product *services.ProductService, inventory *services.InventoryService) *ProductHandler {
+	return &ProductHandler{product: product, inventory: inventory}
 }
 
 // ListProducts godoc
@@ -34,6 +36,7 @@ func NewProductHandler(product *services.ProductService) *ProductHandler {
 // @Param search query string false "Search text (matches name, description, sku, part number)"
 // @Param min query number false "Minimum price (inclusive)"
 // @Param max query number false "Maximum price (inclusive); if min and max are both set, max must be greater than min"
+// @Param sort query string false "price_asc|price_desc|newest"
 // @Success 200 {object} utils.APIResponse
 // @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/products [get]
@@ -63,12 +66,13 @@ func (h *ProductHandler) List(c *gin.Context) {
 		utils.JSONBadRequest(c, "max must be greater than min when both are provided")
 		return
 	}
-	products, total, err := h.product.List(page, limit, categorySlug, search, minPrice, maxPrice)
+	sort := strings.TrimSpace(c.Query("sort"))
+	products, total, err := h.product.List(page, limit, categorySlug, search, sort, minPrice, maxPrice)
 	if err != nil {
 		utils.JSONInternal(c, err.Error())
 		return
 	}
-	utils.JSONPaginated(c, products, page, limit, total)
+	utils.JSONPaginated(c, dto.ProductsToResponse(products), page, limit, total)
 }
 
 // GetProduct godoc
@@ -90,7 +94,7 @@ func (h *ProductHandler) Get(c *gin.Context) {
 		utils.JSONNotFound(c, "product not found")
 		return
 	}
-	utils.JSON(c, http.StatusOK, product)
+	utils.JSON(c, http.StatusOK, dto.ProductToResponse(product))
 }
 
 // CreateProduct godoc
@@ -104,6 +108,11 @@ func (h *ProductHandler) Get(c *gin.Context) {
 // @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/products [post]
 func (h *ProductHandler) Create(c *gin.Context) {
+	user, ok := middleware.GetUser(c)
+	if !ok {
+		utils.JSONUnauthorized(c, "unauthorized")
+		return
+	}
 	var req dto.CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.JSONBadRequest(c, err.Error())
@@ -113,6 +122,11 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	if req.Condition != "" {
 		cond = models.ProductCondition(req.Condition)
 	}
+	initialStock := req.StockQuantity
+	threshold := req.LowStockThreshold
+	if threshold <= 0 {
+		threshold = models.DefaultLowStockThreshold
+	}
 	p := &models.Product{
 		SKU:                req.SKU,
 		Name:               req.Name,
@@ -121,18 +135,37 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		ManufacturerPartNo: req.ManufacturerPartNo,
 		Price:              req.Price,
 		CostPrice:          req.CostPrice,
-		StockQuantity:      req.StockQuantity,
+		StockQuantity:      0,
+		LowStockThreshold:  threshold,
 		Weight:             req.Weight,
 		Dimensions:         req.Dimensions,
 		Condition:          cond,
 		WarrantyMonths:     req.WarrantyMonths,
 	}
+	if user.Role == models.RoleVendor {
+		p.VendorID = &user.ID
+	} else if req.VendorID != nil {
+		p.VendorID = req.VendorID
+	}
 	if err := h.product.Create(p, req.CategoryIDs, req.TagIDs); err != nil {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
+	if initialStock > 0 {
+		performedBy := user.ID
+		if _, err := h.inventory.AdjustStock(c.Request.Context(), nil, services.AdjustStockInput{
+			ProductID:   p.ID,
+			Delta:       initialStock,
+			Reason:      models.StockMovementRestock,
+			PerformedBy: &performedBy,
+			Notes:       "initial stock",
+		}); err != nil {
+			utils.JSONBadRequest(c, err.Error())
+			return
+		}
+	}
 	product, _ := h.product.GetByID(p.ID)
-	utils.JSON(c, http.StatusCreated, product)
+	utils.JSON(c, http.StatusCreated, dto.ProductToResponse(product))
 }
 
 const maxBatchSize = 100
@@ -148,6 +181,11 @@ const maxBatchSize = 100
 // @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/products/batch [post]
 func (h *ProductHandler) CreateBatch(c *gin.Context) {
+	user, ok := middleware.GetUser(c)
+	if !ok {
+		utils.JSONUnauthorized(c, "unauthorized")
+		return
+	}
 	var req dto.CreateProductsBatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.JSONBadRequest(c, err.Error())
@@ -168,7 +206,11 @@ func (h *ProductHandler) CreateBatch(c *gin.Context) {
 		if r.Condition != "" {
 			cond = models.ProductCondition(r.Condition)
 		}
-		inputs[i] = services.CreateProductInput{
+		threshold := r.LowStockThreshold
+		if threshold <= 0 {
+			threshold = models.DefaultLowStockThreshold
+		}
+		in := services.CreateProductInput{
 			SKU:                r.SKU,
 			Name:               r.Name,
 			Description:        r.Description,
@@ -176,7 +218,8 @@ func (h *ProductHandler) CreateBatch(c *gin.Context) {
 			ManufacturerPartNo: r.ManufacturerPartNo,
 			Price:              r.Price,
 			CostPrice:          r.CostPrice,
-			StockQuantity:      r.StockQuantity,
+			StockQuantity:      0,
+			LowStockThreshold:  threshold,
 			Weight:             r.Weight,
 			Dimensions:         r.Dimensions,
 			Condition:          cond,
@@ -184,8 +227,37 @@ func (h *ProductHandler) CreateBatch(c *gin.Context) {
 			CategoryIDs:        r.CategoryIDs,
 			TagIDs:             r.TagIDs,
 		}
+		if user.Role == models.RoleVendor {
+			in.VendorID = &user.ID
+		} else if r.VendorID != nil {
+			in.VendorID = r.VendorID
+		}
+		inputs[i] = in
 	}
 	created, failed := h.product.CreateBatch(inputs)
+	performedBy := user.ID
+	for i := range created {
+		orig := req.Products[created[i].Index]
+		if orig.StockQuantity > 0 {
+			if _, err := h.inventory.AdjustStock(c.Request.Context(), nil, services.AdjustStockInput{
+				ProductID:   created[i].Product.ID,
+				Delta:       orig.StockQuantity,
+				Reason:      models.StockMovementRestock,
+				PerformedBy: &performedBy,
+				Notes:       "initial stock",
+			}); err != nil {
+				failed = append(failed, services.BatchProductFailure{
+					Index:   created[i].Index,
+					SKU:     orig.SKU,
+					Message: err.Error(),
+				})
+				continue
+			}
+			if full, err := h.product.GetByID(created[i].Product.ID); err == nil {
+				created[i].Product = full
+			}
+		}
+	}
 	resp := dto.CreateProductsBatchResponse{
 		Created: make([]dto.BatchProductResult, len(created)),
 		Failed:  make([]dto.BatchProductError, len(failed)),
@@ -219,6 +291,11 @@ func (h *ProductHandler) CreateBatch(c *gin.Context) {
 // @Failure 400,404 {object} utils.APIResponse
 // @Router /api/v1/products/{id} [put]
 func (h *ProductHandler) Update(c *gin.Context) {
+	user, ok := middleware.GetUser(c)
+	if !ok {
+		utils.JSONUnauthorized(c, "unauthorized")
+		return
+	}
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.JSONBadRequest(c, "invalid product id")
@@ -229,11 +306,16 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		utils.JSONNotFound(c, "product not found")
 		return
 	}
+	if !h.inventory.CanAccessProduct(user, product) {
+		utils.JSONForbidden(c, "access denied")
+		return
+	}
 	var req dto.UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
+	oldStock := product.StockQuantity
 	if req.Name != nil {
 		product.Name = *req.Name
 	}
@@ -252,8 +334,11 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	if req.CostPrice != nil {
 		product.CostPrice = *req.CostPrice
 	}
-	if req.StockQuantity != nil {
-		product.StockQuantity = *req.StockQuantity
+	if req.LowStockThreshold != nil {
+		product.LowStockThreshold = *req.LowStockThreshold
+	}
+	if user.Role == models.RoleAdmin && req.VendorID != nil {
+		product.VendorID = req.VendorID
 	}
 	if req.Weight != nil {
 		product.Weight = *req.Weight
@@ -270,6 +355,19 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	if err := h.product.Update(product, req.CategoryIDs, req.TagIDs); err != nil {
 		utils.JSONBadRequest(c, err.Error())
 		return
+	}
+	if req.StockQuantity != nil && *req.StockQuantity != oldStock {
+		performedBy := user.ID
+		if _, err := h.inventory.AdjustStock(c.Request.Context(), nil, services.AdjustStockInput{
+			ProductID:   id,
+			Delta:       *req.StockQuantity - oldStock,
+			Reason:      models.StockMovementAdjustment,
+			PerformedBy: &performedBy,
+			Notes:       "product update",
+		}); err != nil {
+			utils.JSONBadRequest(c, err.Error())
+			return
+		}
 	}
 	if req.Images != nil {
 		inputs := make([]services.AddImagesInput, len(*req.Images))
@@ -292,7 +390,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 		}
 	}
 	updated, _ := h.product.GetByID(id)
-	utils.JSON(c, http.StatusOK, updated)
+	utils.JSON(c, http.StatusOK, dto.ProductToResponse(updated))
 }
 
 // DeleteProduct godoc
@@ -371,7 +469,7 @@ func (h *ProductHandler) Search(c *gin.Context) {
 		utils.JSONInternal(c, err.Error())
 		return
 	}
-	utils.JSONPaginated(c, result.Products, q.Page, q.Limit, result.Total)
+	utils.JSONPaginated(c, dto.ProductsToResponse(result.Products), q.Page, q.Limit, result.Total)
 }
 
 // GetCompatibility godoc

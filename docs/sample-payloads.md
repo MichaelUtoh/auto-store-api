@@ -103,7 +103,14 @@ No body.
 **Query (optional):**
 ```
 ?page=1&limit=20
+&category=brakes
+&search=brake+pad
+&min=50
+&max=200
+&sort=price_asc
 ```
+
+`sort`: `price_asc`, `price_desc`, or `newest` (default: newest first).
 
 ---
 

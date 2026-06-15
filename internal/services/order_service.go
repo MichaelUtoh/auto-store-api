@@ -1,9 +1,11 @@
 package services
 
 import (
+	"context"
+	"errors"
+
 	"auto-store-api/internal/models"
 	"auto-store-api/internal/repositories"
-	"errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,6 +22,7 @@ type OrderService struct {
 	cartRepo    *repositories.CartRepository
 	addressRepo *repositories.AddressRepository
 	productRepo *repositories.ProductRepository
+	inventory   *InventoryService
 	db          *gorm.DB
 }
 
@@ -28,6 +31,7 @@ func NewOrderService(
 	cartRepo *repositories.CartRepository,
 	addressRepo *repositories.AddressRepository,
 	productRepo *repositories.ProductRepository,
+	inventory *InventoryService,
 	db *gorm.DB,
 ) *OrderService {
 	return &OrderService{
@@ -35,6 +39,7 @@ func NewOrderService(
 		cartRepo:    cartRepo,
 		addressRepo: addressRepo,
 		productRepo: productRepo,
+		inventory:   inventory,
 		db:          db,
 	}
 }
@@ -78,28 +83,43 @@ func (s *OrderService) Create(userID, shippingAddrID, billingAddrID uuid.UUID, p
 	shippingCost := 0.0
 	total := subtotal + tax + shippingCost
 
-	order := &models.Order{
-		UserID:            userID,
-		Status:            models.OrderStatusPending,
-		Subtotal:          subtotal,
-		Tax:               tax,
-		ShippingCost:      shippingCost,
-		Total:             total,
-		ShippingAddressID: shippingAddrID,
-		BillingAddressID:  billingAddrID,
-		PaymentMethod:    paymentMethod,
-		PaymentStatus:     models.PaymentPending,
-	}
-	if err := s.orderRepo.Create(order); err != nil {
-		return nil, err
-	}
-	for i := range orderItems {
-		orderItems[i].OrderID = order.ID
-		if err := s.orderRepo.AddItem(&orderItems[i]); err != nil {
-			return nil, err
+	var order *models.Order
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		order = &models.Order{
+			UserID:            userID,
+			Status:            models.OrderStatusPending,
+			Subtotal:          subtotal,
+			Tax:               tax,
+			ShippingCost:      shippingCost,
+			Total:             total,
+			ShippingAddressID: shippingAddrID,
+			BillingAddressID:  billingAddrID,
+			PaymentMethod:     paymentMethod,
+			PaymentStatus:     models.PaymentPending,
 		}
-		s.db.Model(&models.Product{}).Where("id = ?", orderItems[i].ProductID).
-			Update("stock_quantity", gorm.Expr("stock_quantity - ?", orderItems[i].Quantity))
+		if err := tx.Create(order).Error; err != nil {
+			return err
+		}
+		ctx := context.Background()
+		for i := range orderItems {
+			orderItems[i].OrderID = order.ID
+			if err := tx.Create(&orderItems[i]).Error; err != nil {
+				return err
+			}
+			refID := order.ID
+			if _, err := s.inventory.AdjustStock(ctx, tx, AdjustStockInput{
+				ProductID:   orderItems[i].ProductID,
+				Delta:       -orderItems[i].Quantity,
+				Reason:      models.StockMovementOrder,
+				ReferenceID: &refID,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	_ = s.cartRepo.Clear(userID)
 	return order, nil
@@ -138,8 +158,26 @@ func (s *OrderService) Cancel(id, userID uuid.UUID) error {
 	if o.Status != models.OrderStatusPending {
 		return errors.New("only pending orders can be cancelled")
 	}
-	o.Status = models.OrderStatusCancelled
-	return s.orderRepo.Update(o)
+
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		o.Status = models.OrderStatusCancelled
+		if err := tx.Save(o).Error; err != nil {
+			return err
+		}
+		ctx := context.Background()
+		refID := o.ID
+		for _, item := range o.OrderItems {
+			if _, err := s.inventory.AdjustStock(ctx, tx, AdjustStockInput{
+				ProductID:   item.ProductID,
+				Delta:       item.Quantity,
+				Reason:      models.StockMovementCancel,
+				ReferenceID: &refID,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *OrderService) ListAll(page, limit int, status string) ([]models.Order, int64, error) {

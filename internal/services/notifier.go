@@ -183,3 +183,23 @@ func truncatePreview(s string, max int) string {
 	}
 	return s[:max-3] + "..."
 }
+
+func (n *Notifier) LowStockAlert(ctx context.Context, userID uuid.UUID, product *models.Product, cycle int) error {
+	if product == nil {
+		return nil
+	}
+	return n.notify.Notify(ctx, NotifyInput{
+		UserID:         userID,
+		Type:           models.NotificationLowStock,
+		IdempotencyKey: fmt.Sprintf("product:%s:low_stock:cycle:%d", product.ID, cycle),
+		Title:          "Low stock alert",
+		Body:           fmt.Sprintf("%s (SKU: %s) is low on stock — %d remaining (threshold: %d).", product.Name, product.SKU, product.StockQuantity, product.LowStockThreshold),
+		Payload: map[string]interface{}{
+			"product_id": product.ID.String(),
+			"sku":        product.SKU,
+			"quantity":   product.StockQuantity,
+			"threshold":  product.LowStockThreshold,
+			"href":       fmt.Sprintf("/admin/inventory/products/%s", product.ID),
+		},
+	})
+}

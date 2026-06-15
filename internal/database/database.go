@@ -90,7 +90,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.ProductTag{},
 		&models.ProductImage{},
 		&models.Specification{},
-		&models.VehicleCompatibility{},
+		&models.StockMovement{},
 		&models.Order{},
 		&models.OrderItem{},
 		&models.Review{},

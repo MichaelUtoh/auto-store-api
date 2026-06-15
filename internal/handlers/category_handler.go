@@ -85,7 +85,7 @@ func (h *CategoryHandler) GetProducts(c *gin.Context) {
 		utils.JSONInternal(c, err.Error())
 		return
 	}
-	utils.JSONPaginated(c, products, page, limit, total)
+	utils.JSONPaginated(c, dto.ProductsToResponse(products), page, limit, total)
 }
 
 // CreateCategory godoc

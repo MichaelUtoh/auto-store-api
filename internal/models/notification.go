@@ -37,6 +37,7 @@ const (
 	NotificationMechanicApplyReceived NotificationType = "mechanic.apply_received"
 	NotificationSupportAdminReplied  NotificationType = "support.admin_replied"
 	NotificationSupportNewConversation NotificationType = "support.new_conversation"
+	NotificationLowStock               NotificationType = "inventory.low_stock"
 )
 
 // Notification is a single delivery record (one row per user + channel + idempotency key).
