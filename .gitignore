@@ -21,6 +21,7 @@ vendor/
 # Environment & secrets
 .env
 .env.local
+.env.prod
 .env.*.local
 *.pem
 
@@ -53,3 +54,5 @@ temp/
 
 # Air (live reload)
 tmp/
+
+paystack-payment-setup.md
