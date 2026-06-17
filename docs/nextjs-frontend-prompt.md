@@ -71,7 +71,7 @@ Auth middleware may return **401** with body like `{ "error": "missing or invali
 
 ### 3.2 Authentication
 
-- **Register:** `POST /api/v1/auth/register` — Body: `email`, `password` (required, min 8), `first_name`, `last_name`, `phone` (optional). Success 201: `data` = user object (no tokens); then user logs in.
+- **Register:** `POST /api/v1/auth/register` — Body: `email`, `password` (required, min 8), `first_name` / `firstName`, `last_name` / `lastName`, `phone` (optional). Success 201: same shape as login (`access_token`, `refresh_token`, `expires_at`, `user`).
 - **Login:** `POST /api/v1/auth/login` — Body: `email`, `password`. Success 200: `data` has `access_token`, `refresh_token`, `expires_at`, `user`.
 - **Refresh:** `POST /api/v1/auth/refresh` — Body: `refresh_token`. Success 200: same shape as login.
 - **Logout:** `POST /api/v1/auth/logout` — Header: `Authorization: Bearer <access_token>`. Success 204.

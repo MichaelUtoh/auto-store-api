@@ -110,6 +110,217 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/admin/inventory/bulk-threshold": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Bulk-set low stock threshold (Admin)",
+                "parameters": [
+                    {
+                        "description": "Bulk threshold",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.BulkThresholdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/inventory/low-stock": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "List low-stock products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/inventory/products/{id}/movements": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "List stock movements for a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/inventory/products/{id}/settings": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Update inventory settings for a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UpdateInventorySettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ProductResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/inventory/products/{id}/stock": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Adjust product stock (restock or correction)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Stock adjustment",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.AdjustStockRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ProductResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/mechanics": {
             "get": {
                 "security": [
@@ -653,7 +864,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.UserResponse"
+                            "$ref": "#/definitions/auto-store-api_internal_handlers_dto.AuthResponse"
                         }
                     },
                     "400": {
@@ -2250,6 +2461,12 @@ const docTemplate = `{
                         "description": "Maximum price (inclusive); if min and max are both set, max must be greater than min",
                         "name": "max",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "price_asc|price_desc|newest",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3318,6 +3535,29 @@ const docTemplate = `{
                 }
             }
         },
+        "auto-store-api_internal_handlers_dto.AdjustStockRequest": {
+            "type": "object",
+            "required": [
+                "delta"
+            ],
+            "properties": {
+                "delta": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string",
+                    "enum": [
+                        "restock",
+                        "adjustment",
+                        "refund",
+                        "cancel"
+                    ]
+                }
+            }
+        },
         "auto-store-api_internal_handlers_dto.AuthResponse": {
             "type": "object",
             "properties": {
@@ -3357,6 +3597,27 @@ const docTemplate = `{
                 },
                 "product": {
                     "$ref": "#/definitions/auto-store-api_internal_models.Product"
+                }
+            }
+        },
+        "auto-store-api_internal_handlers_dto.BulkThresholdRequest": {
+            "type": "object",
+            "required": [
+                "threshold"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "product_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "threshold": {
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         },
@@ -3554,6 +3815,10 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100
                 },
+                "low_stock_threshold": {
+                    "type": "integer",
+                    "minimum": 0
+                },
                 "manufacturer_part_number": {
                     "type": "string",
                     "maxLength": 100
@@ -3578,6 +3843,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "vendor_id": {
+                    "type": "string"
                 },
                 "warranty_months": {
                     "type": "integer",
@@ -4017,6 +4285,110 @@ const docTemplate = `{
                 }
             }
         },
+        "auto-store-api_internal_handlers_dto.ProductResponse": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.Category"
+                    }
+                },
+                "compatibilities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.VehicleCompatibility"
+                    }
+                },
+                "condition": {
+                    "$ref": "#/definitions/auto-store-api_internal_models.ProductCondition"
+                },
+                "cost_price": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "dimensions": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.ProductImage"
+                    }
+                },
+                "in_stock": {
+                    "type": "boolean"
+                },
+                "installation_eligible": {
+                    "type": "boolean"
+                },
+                "installation_job_type_id": {
+                    "type": "string"
+                },
+                "low_stock_threshold": {
+                    "type": "integer"
+                },
+                "manufacturer_part_number": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "reviews": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.Review"
+                    }
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "specifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.Specification"
+                    }
+                },
+                "stock_quantity": {
+                    "type": "integer"
+                },
+                "stock_status": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/auto-store-api_internal_models.Tag"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "vendor_id": {
+                    "type": "string"
+                },
+                "warranty_months": {
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
         "auto-store-api_internal_handlers_dto.RefreshRequest": {
             "type": "object",
             "required": [
@@ -4054,7 +4426,16 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "firstName": {
+                    "description": "Camel-case aliases for typical frontend payloads",
+                    "type": "string",
+                    "maxLength": 100
+                },
                 "first_name": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "lastName": {
                     "type": "string",
                     "maxLength": 100
                 },
@@ -4158,6 +4539,15 @@ const docTemplate = `{
                 }
             }
         },
+        "auto-store-api_internal_handlers_dto.UpdateInventorySettingsRequest": {
+            "type": "object",
+            "properties": {
+                "low_stock_threshold": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
         "auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest": {
             "type": "object",
             "properties": {
@@ -4225,6 +4615,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/auto-store-api_internal_handlers_dto.ProductImageItem"
                     }
                 },
+                "low_stock_threshold": {
+                    "type": "integer"
+                },
                 "manufacturer_part_number": {
                     "type": "string"
                 },
@@ -4242,6 +4635,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "vendor_id": {
+                    "type": "string"
                 },
                 "warranty_months": {
                     "type": "integer"
@@ -4709,6 +5105,9 @@ const docTemplate = `{
                 "installation_job_type_id": {
                     "type": "string"
                 },
+                "low_stock_threshold": {
+                    "type": "integer"
+                },
                 "manufacturer_part_number": {
                     "type": "string"
                 },
@@ -4743,6 +5142,9 @@ const docTemplate = `{
                     }
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "vendor_id": {
                     "type": "string"
                 },
                 "warranty_months": {

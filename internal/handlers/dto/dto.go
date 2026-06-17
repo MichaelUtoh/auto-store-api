@@ -16,6 +16,23 @@ type RegisterRequest struct {
 	FirstName string `json:"first_name" binding:"max=100"`
 	LastName  string `json:"last_name" binding:"max=100"`
 	Phone     string `json:"phone" binding:"omitempty,phone"`
+	// Camel-case aliases for typical frontend payloads
+	FirstNameCamel string `json:"firstName" binding:"max=100"`
+	LastNameCamel  string `json:"lastName" binding:"max=100"`
+}
+
+func (r RegisterRequest) FirstNameValue() string {
+	if r.FirstName != "" {
+		return r.FirstName
+	}
+	return r.FirstNameCamel
+}
+
+func (r RegisterRequest) LastNameValue() string {
+	if r.LastName != "" {
+		return r.LastName
+	}
+	return r.LastNameCamel
 }
 
 type LoginRequest struct {

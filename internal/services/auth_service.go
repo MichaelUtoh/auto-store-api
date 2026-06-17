@@ -44,21 +44,21 @@ func NewAuthService(userRepo *repositories.UserRepository, jwt *auth.JWTManager,
 	return &AuthService{userRepo: userRepo, jwt: jwt, cfg: cfg, log: log}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, password, firstName, lastName, phone string) (*models.User, error) {
+func (s *AuthService) Register(ctx context.Context, email, password, firstName, lastName, phone string) (*models.User, string, string, time.Time, error) {
 	exists, err := s.userRepo.ExistsByEmail(email)
 	if err != nil {
-		return nil, err
+		return nil, "", "", time.Time{}, err
 	}
 	if exists {
-		return nil, ErrEmailExists
+		return nil, "", "", time.Time{}, ErrEmailExists
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, err
+		return nil, "", "", time.Time{}, err
 	}
 	count, err := s.userRepo.Count()
 	if err != nil {
-		return nil, err
+		return nil, "", "", time.Time{}, err
 	}
 	role := models.RoleCustomer
 	if count == 0 {
@@ -73,9 +73,17 @@ func (s *AuthService) Register(ctx context.Context, email, password, firstName, 
 		Role:         role,
 	}
 	if err := s.userRepo.Create(user); err != nil {
-		return nil, err
+		return nil, "", "", time.Time{}, err
 	}
-	return user, nil
+	access, refresh, expiresAt := s.issueTokens(user)
+	return user, access, refresh, expiresAt, nil
+}
+
+func (s *AuthService) issueTokens(user *models.User) (string, string, time.Time) {
+	accessToken, _ := s.jwt.GenerateAccessToken(user.ID, user.Email, string(user.Role))
+	refreshToken, _ := s.jwt.GenerateRefreshToken(user.ID, user.Email, string(user.Role))
+	expiresAt := time.Now().Add(s.jwt.AccessExpiry)
+	return accessToken, refreshToken, expiresAt
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (*models.User, string, string, time.Time, error) {
@@ -100,10 +108,8 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*model
 	}
 	cache.Client.Del(ctx, lockKey)
 
-	accessToken, _ := s.jwt.GenerateAccessToken(user.ID, user.Email, string(user.Role))
-	refreshToken, _ := s.jwt.GenerateRefreshToken(user.ID, user.Email, string(user.Role))
-	expiresAt := time.Now().Add(s.jwt.AccessExpiry)
-	return user, accessToken, refreshToken, expiresAt, nil
+	access, refresh, expiresAt := s.issueTokens(user)
+	return user, access, refresh, expiresAt, nil
 }
 
 func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*models.User, string, string, time.Time, error) {
@@ -115,10 +121,8 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*models
 	if err != nil {
 		return nil, "", "", time.Time{}, err
 	}
-	accessToken, _ := s.jwt.GenerateAccessToken(user.ID, user.Email, string(user.Role))
-	newRefresh, _ := s.jwt.GenerateRefreshToken(user.ID, user.Email, string(user.Role))
-	expiresAt := time.Now().Add(s.jwt.AccessExpiry)
-	return user, accessToken, newRefresh, expiresAt, nil
+	access, refresh, expiresAt := s.issueTokens(user)
+	return user, access, refresh, expiresAt, nil
 }
 
 func (s *AuthService) Logout(ctx context.Context, userID uuid.UUID) error {

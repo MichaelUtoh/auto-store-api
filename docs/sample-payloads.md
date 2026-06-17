@@ -29,6 +29,10 @@ Minimal (phone optional):
 }
 ```
 
+CamelCase field names (`firstName`, `lastName`) are also accepted.
+
+**Success (201):** same shape as login — `data` contains `access_token`, `refresh_token`, `expires_at`, and `user`.
+
 ---
 
 ### POST /auth/login

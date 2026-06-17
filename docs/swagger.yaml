@@ -33,6 +33,22 @@ definitions:
     required:
     - compatibilities
     type: object
+  auto-store-api_internal_handlers_dto.AdjustStockRequest:
+    properties:
+      delta:
+        type: integer
+      notes:
+        type: string
+      reason:
+        enum:
+        - restock
+        - adjustment
+        - refund
+        - cancel
+        type: string
+    required:
+    - delta
+    type: object
   auto-store-api_internal_handlers_dto.AuthResponse:
     properties:
       access_token:
@@ -59,6 +75,20 @@ definitions:
         type: integer
       product:
         $ref: '#/definitions/auto-store-api_internal_models.Product'
+    type: object
+  auto-store-api_internal_handlers_dto.BulkThresholdRequest:
+    properties:
+      category_id:
+        type: string
+      product_ids:
+        items:
+          type: string
+        type: array
+      threshold:
+        minimum: 0
+        type: integer
+    required:
+    - threshold
     type: object
   auto-store-api_internal_handlers_dto.ChatMessageResponse:
     properties:
@@ -190,6 +220,9 @@ definitions:
       dimensions:
         maxLength: 100
         type: string
+      low_stock_threshold:
+        minimum: 0
+        type: integer
       manufacturer_part_number:
         maxLength: 100
         type: string
@@ -208,6 +241,8 @@ definitions:
         items:
           type: string
         type: array
+      vendor_id:
+        type: string
       warranty_months:
         minimum: 0
         type: integer
@@ -509,6 +544,75 @@ definitions:
     required:
     - url
     type: object
+  auto-store-api_internal_handlers_dto.ProductResponse:
+    properties:
+      brand:
+        type: string
+      categories:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Category'
+        type: array
+      compatibilities:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.VehicleCompatibility'
+        type: array
+      condition:
+        $ref: '#/definitions/auto-store-api_internal_models.ProductCondition'
+      cost_price:
+        type: number
+      created_at:
+        type: string
+      description:
+        type: string
+      dimensions:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.ProductImage'
+        type: array
+      in_stock:
+        type: boolean
+      installation_eligible:
+        type: boolean
+      installation_job_type_id:
+        type: string
+      low_stock_threshold:
+        type: integer
+      manufacturer_part_number:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      reviews:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Review'
+        type: array
+      sku:
+        type: string
+      specifications:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Specification'
+        type: array
+      stock_quantity:
+        type: integer
+      stock_status:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/auto-store-api_internal_models.Tag'
+        type: array
+      updated_at:
+        type: string
+      vendor_id:
+        type: string
+      warranty_months:
+        type: integer
+      weight:
+        type: number
+    type: object
   auto-store-api_internal_handlers_dto.RefreshRequest:
     properties:
       refresh_token:
@@ -534,7 +638,14 @@ definitions:
       first_name:
         maxLength: 100
         type: string
+      firstName:
+        description: Camel-case aliases for typical frontend payloads
+        maxLength: 100
+        type: string
       last_name:
+        maxLength: 100
+        type: string
+      lastName:
         maxLength: 100
         type: string
       password:
@@ -603,6 +714,12 @@ definitions:
       slug:
         type: string
     type: object
+  auto-store-api_internal_handlers_dto.UpdateInventorySettingsRequest:
+    properties:
+      low_stock_threshold:
+        minimum: 0
+        type: integer
+    type: object
   auto-store-api_internal_handlers_dto.UpdateNotificationPreferenceRequest:
     properties:
       email_enabled:
@@ -652,6 +769,8 @@ definitions:
         items:
           $ref: '#/definitions/auto-store-api_internal_handlers_dto.ProductImageItem'
         type: array
+      low_stock_threshold:
+        type: integer
       manufacturer_part_number:
         type: string
       name:
@@ -664,6 +783,8 @@ definitions:
         items:
           type: string
         type: array
+      vendor_id:
+        type: string
       warranty_months:
         type: integer
       weight:
@@ -985,6 +1106,8 @@ definitions:
         type: boolean
       installation_job_type_id:
         type: string
+      low_stock_threshold:
+        type: integer
       manufacturer_part_number:
         type: string
       name:
@@ -1008,6 +1131,8 @@ definitions:
           $ref: '#/definitions/auto-store-api_internal_models.Tag'
         type: array
       updated_at:
+        type: string
+      vendor_id:
         type: string
       warranty_months:
         type: integer
@@ -1316,6 +1441,136 @@ paths:
       summary: 'Admin: refund installation booking via Paystack'
       tags:
       - admin
+  /api/v1/admin/inventory/bulk-threshold:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk threshold
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.BulkThresholdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk-set low stock threshold (Admin)
+      tags:
+      - inventory
+  /api/v1/admin/inventory/low-stock:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List low-stock products
+      tags:
+      - inventory
+  /api/v1/admin/inventory/products/{id}/movements:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List stock movements for a product
+      tags:
+      - inventory
+  /api/v1/admin/inventory/products/{id}/settings:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.UpdateInventorySettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ProductResponse'
+      security:
+      - BearerAuth: []
+      summary: Update inventory settings for a product
+      tags:
+      - inventory
+  /api/v1/admin/inventory/products/{id}/stock:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stock adjustment
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auto-store-api_internal_handlers_dto.AdjustStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.ProductResponse'
+      security:
+      - BearerAuth: []
+      summary: Adjust product stock (restock or correction)
+      tags:
+      - inventory
   /api/v1/admin/mechanics:
     get:
       parameters:
@@ -1655,7 +1910,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auto-store-api_internal_handlers_dto.UserResponse'
+            $ref: '#/definitions/auto-store-api_internal_handlers_dto.AuthResponse'
         "400":
           description: Bad Request
           schema:
@@ -2640,6 +2895,10 @@ paths:
         in: query
         name: max
         type: number
+      - description: price_asc|price_desc|newest
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:

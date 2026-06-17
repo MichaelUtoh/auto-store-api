@@ -24,7 +24,7 @@ func NewAuthHandler(auth *services.AuthService) *AuthHandler {
 // @Accept json
 // @Produce json
 // @Param body body dto.RegisterRequest true "Registration data"
-// @Success 201 {object} dto.UserResponse
+// @Success 201 {object} dto.AuthResponse
 // @Failure 400 {object} utils.APIResponse
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -37,7 +37,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
-	user, err := h.auth.Register(c.Request.Context(), req.Email, req.Password, req.FirstName, req.LastName, req.Phone)
+	user, access, refresh, expiresAt, err := h.auth.Register(
+		c.Request.Context(),
+		req.Email,
+		req.Password,
+		req.FirstNameValue(),
+		req.LastNameValue(),
+		req.Phone,
+	)
 	if err != nil {
 		if err == services.ErrEmailExists {
 			utils.JSONError(c, http.StatusConflict, "email already registered")
@@ -46,7 +53,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		utils.JSONError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	utils.JSON(c, http.StatusCreated, dto.UserToResponse(user))
+	utils.JSON(c, http.StatusCreated, dto.AuthResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+		ExpiresAt:    expiresAt,
+		User:         dto.UserToResponse(user),
+	})
 }
 
 // Login godoc
