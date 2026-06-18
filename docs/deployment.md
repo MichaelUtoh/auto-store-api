@@ -417,12 +417,73 @@ gunzip -c /opt/backups/auto_store_YYYY-MM-DD.sql.gz | docker exec -i CONTAINER_N
 
 ## 11. Deploying updates
 
+### Manual deploy
+
+```bash
+cd /opt/auto-store-api
+bash scripts/deploy.sh
+```
+
+Or step by step:
+
 ```bash
 cd /opt/auto-store-api
 git pull
-docker compose up -d --build
+docker compose up -d --build api worker
 docker compose logs -f api worker
 ```
+
+### Automatic deploy (GitHub Actions → Hetzner)
+
+Pushing to `main` runs tests in GitHub Actions, then SSHs into the server and runs `scripts/deploy.sh`.
+
+**One-time server setup**
+
+1. Ensure the repo is cloned at `/opt/auto-store-api` (see [§3](#3-clone-the-repository)).
+2. Make the deploy script executable:
+
+```bash
+chmod +x /opt/auto-store-api/scripts/deploy.sh
+```
+
+3. Confirm manual deploy works before enabling CI:
+
+```bash
+bash /opt/auto-store-api/scripts/deploy.sh
+```
+
+**One-time GitHub setup**
+
+In the repository → **Settings** → **Secrets and variables** → **Actions**, add:
+
+| Secret | Example | Purpose |
+|--------|---------|---------|
+| `HETZNER_HOST` | `123.45.67.89` or `api.yourdomain.com` | Server address |
+| `HETZNER_USER` | `deploy` | SSH user (not `root`) |
+| `HETZNER_SSH_KEY` | contents of private key | SSH auth for deploy |
+
+Generate a deploy key (on your laptop):
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/auto-store-deploy -N ""
+```
+
+- Add the **public** key (`auto-store-deploy.pub`) to `/home/deploy/.ssh/authorized_keys` on the server.
+- Add the **private** key (`auto-store-deploy`) as the `HETZNER_SSH_KEY` secret in GitHub.
+
+The deploy user only needs permission to run Docker and write to `/opt/auto-store-api`. If `docker` requires sudo, add the user to the `docker` group (`sudo usermod -aG docker deploy`).
+
+**What happens on each push to `main`**
+
+1. `go test ./...` runs in GitHub Actions.
+2. On success, Actions SSHs to the server and runs `scripts/deploy.sh`, which:
+   - `git fetch` + `git reset --hard origin/main`
+   - `docker compose up -d --build api worker`
+   - `curl` health check on `http://127.0.0.1:8089/health`
+
+Pull requests run tests only; they do not deploy.
+
+To deploy a different branch, set `DEPLOY_BRANCH` on the server before running the script (default: `main`).
 
 ---
 
@@ -440,6 +501,7 @@ docker compose logs -f api worker
 - [ ] S3 uploads working (if using product images)
 - [ ] Daily Postgres backups scheduled
 - [ ] Frontend `API_URL` env var points to `https://api.yourdomain.com`
+- [ ] GitHub Actions secrets set (`HETZNER_HOST`, `HETZNER_USER`, `HETZNER_SSH_KEY`) and auto-deploy tested
 
 ---
 
