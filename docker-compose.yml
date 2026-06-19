@@ -1,21 +1,18 @@
 services:
   api:
     build: .
+    env_file: .env
     # So the API container can reach MinIO (or other services) on the host Mac/Windows/Linux
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "8089:8089"
     environment:
-      PORT: 8089
+      # Docker network service names (override localhost defaults from .env)
       DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: auto_store
       REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: change-me-in-production
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:-change-me-ai-service-key}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
       # Support chat WebSocket: ws://localhost:8089/api/v1/ws/chat?token=...
       S3_BUCKET: ${S3_BUCKET:-}
@@ -34,7 +31,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: auto_store
     ports:
       - "5432:5432"
@@ -56,14 +53,11 @@ services:
   worker:
     build: .
     command: ["./worker"]
+    env_file: .env
     environment:
       DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: auto_store
       REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
