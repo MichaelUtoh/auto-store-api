@@ -80,6 +80,12 @@ func doConnect(dsn string, log *zap.Logger) error {
 
 // AutoMigrate runs GORM AutoMigrate for all models
 func AutoMigrate(db *gorm.DB) error {
+	if err := prepareLegacyVehicleCompatibilityTable(db); err != nil {
+		return err
+	}
+	if err := migrateVehicleCompatibilityIntToUUID(db); err != nil {
+		return err
+	}
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Address{},
@@ -90,6 +96,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.ProductTag{},
 		&models.ProductImage{},
 		&models.Specification{},
+		&models.VehicleCompatibility{},
+		&models.ProductVehicleCompatibility{},
 		&models.StockMovement{},
 		&models.Order{},
 		&models.OrderItem{},
@@ -114,6 +122,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Conversation{},
 		&models.ChatMessage{},
 	); err != nil {
+		return err
+	}
+	if err := MigrateVehicleCompatibilityM2M(db); err != nil {
 		return err
 	}
 	return SeedInstallationJobTypes(db)

@@ -219,38 +219,76 @@ func (s *ProductService) AddImages(productID uuid.UUID, images []AddImagesInput)
 	return created, nil
 }
 
-// AddCompatibilitiesInput is a single vehicle compatibility to add.
+// AddCompatibilitiesInput creates a new catalog entry and links it to the product.
 type AddCompatibilitiesInput struct {
-	Make      string
-	Model     string
-	YearStart int
-	YearEnd   int
-	Engine    string
-	Trim      string
-	Notes     string
+	Make          string
+	Model         string
+	Generation    string
+	YearStart     int
+	YearEnd       int
+	Engine        string
+	Trim          string
+	MarketVariant string
+	Notes         string
+	LinkNotes     string
 }
 
-// AddCompatibilities adds vehicle compatibilities to a product by ID.
-func (s *ProductService) AddCompatibilities(productID uuid.UUID, items []AddCompatibilitiesInput) ([]models.VehicleCompatibility, error) {
+// LinkCompatibilitiesInput links existing catalog entries to a product.
+type LinkCompatibilitiesInput struct {
+	CompatibilityID uuid.UUID
+	LinkNotes       string
+}
+
+func (s *ProductService) ListLinkedCompatibilities(productID uuid.UUID) ([]repositories.LinkedCompatibility, error) {
 	if _, err := s.productRepo.GetByID(productID); err != nil {
 		return nil, err
 	}
-	var created []models.VehicleCompatibility
+	return s.compatRepo.GetLinkedByProductID(productID)
+}
+
+// LinkCompatibilities attaches existing catalog compatibilities to a product.
+func (s *ProductService) LinkCompatibilities(productID uuid.UUID, items []LinkCompatibilitiesInput) ([]repositories.LinkedCompatibility, error) {
+	if _, err := s.productRepo.GetByID(productID); err != nil {
+		return nil, err
+	}
 	for _, in := range items {
-		v := models.VehicleCompatibility{
-			ProductID: productID,
-			Make:      in.Make,
-			Model:     in.Model,
-			YearStart: in.YearStart,
-			YearEnd:   in.YearEnd,
-			Engine:    in.Engine,
-			Trim:      in.Trim,
-			Notes:     in.Notes,
-		}
-		if err := s.compatRepo.Create(&v); err != nil {
+		if _, err := s.compatRepo.GetByID(in.CompatibilityID); err != nil {
 			return nil, err
 		}
-		created = append(created, v)
+		if err := s.compatRepo.LinkProduct(productID, in.CompatibilityID, in.LinkNotes); err != nil {
+			return nil, err
+		}
 	}
-	return created, nil
+	return s.compatRepo.GetLinkedByProductID(productID)
+}
+
+// AddCompatibilities creates catalog entries (deduped) and links them to a product.
+func (s *ProductService) AddCompatibilities(productID uuid.UUID, items []AddCompatibilitiesInput) ([]repositories.LinkedCompatibility, error) {
+	if _, err := s.productRepo.GetByID(productID); err != nil {
+		return nil, err
+	}
+	for _, in := range items {
+		v, err := s.compatRepo.FindOrCreate(models.VehicleCompatibility{
+			Make:          in.Make,
+			Model:         in.Model,
+			Generation:    in.Generation,
+			YearStart:     in.YearStart,
+			YearEnd:       in.YearEnd,
+			Engine:        in.Engine,
+			Trim:          in.Trim,
+			MarketVariant: in.MarketVariant,
+			Notes:         in.Notes,
+		})
+		if err != nil {
+			return nil, err
+		}
+		linkNotes := in.LinkNotes
+		if linkNotes == "" {
+			linkNotes = in.Notes
+		}
+		if err := s.compatRepo.LinkProduct(productID, v.ID, linkNotes); err != nil {
+			return nil, err
+		}
+	}
+	return s.compatRepo.GetLinkedByProductID(productID)
 }

@@ -71,19 +71,7 @@ func (r *ProductRepository) Search(params SearchParams) (*SearchResult, error) {
 		q = q.Where("id IN (?)", sub)
 	}
 	if params.Make != "" || params.Model != "" || params.YearStart != nil || params.YearEnd != nil {
-		compatSub := r.db.Model(&models.VehicleCompatibility{})
-		if params.Make != "" {
-			compatSub = compatSub.Where("LOWER(make) = ?", strings.ToLower(params.Make))
-		}
-		if params.Model != "" {
-			compatSub = compatSub.Where("LOWER(model) = ?", strings.ToLower(params.Model))
-		}
-		if params.YearStart != nil {
-			compatSub = compatSub.Where("year_end >= ?", *params.YearStart)
-		}
-		if params.YearEnd != nil {
-			compatSub = compatSub.Where("year_start <= ?", *params.YearEnd)
-		}
+		compatSub := applyVehicleCompatibilityFilter(r.db, params.Make, params.Model, params.YearStart, params.YearEnd, "", "")
 		var productIDs []uuid.UUID
 		compatSub.Pluck("product_id", &productIDs)
 		if len(productIDs) > 0 {

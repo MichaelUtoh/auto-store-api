@@ -43,7 +43,7 @@ type Product struct {
 	Tags           []Tag          `gorm:"many2many:product_tags;" json:"tags,omitempty"`
 	Images         []ProductImage `gorm:"foreignKey:ProductID" json:"images,omitempty"`
 	Specifications []Specification `gorm:"foreignKey:ProductID" json:"specifications,omitempty"`
-	Compatibilities []VehicleCompatibility `gorm:"foreignKey:ProductID" json:"compatibilities,omitempty"`
+	Compatibilities []VehicleCompatibility `gorm:"many2many:product_vehicle_compatibilities;" json:"compatibilities,omitempty"`
 	Reviews        []Review       `gorm:"foreignKey:ProductID" json:"reviews,omitempty"`
 }
 
@@ -108,29 +108,6 @@ type ProductCategory struct {
 }
 
 func (ProductCategory) TableName() string { return "product_categories" }
-
-type VehicleCompatibility struct {
-	ID         uuid.UUID `gorm:"type:uuid;primary_key" json:"id"`
-	ProductID  uuid.UUID `gorm:"type:uuid;not null;index" json:"product_id"`
-	Make       string    `gorm:"not null;index" json:"make"`
-	Model      string    `gorm:"not null;index" json:"model"`
-	YearStart  int       `gorm:"column:year_start" json:"year_start"`
-	YearEnd    int       `gorm:"column:year_end" json:"year_end"`
-	Engine     string    `gorm:"" json:"engine"`
-	Trim       string    `gorm:"" json:"trim"`
-	Notes      string    `gorm:"type:text" json:"notes"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-}
-
-func (VehicleCompatibility) TableName() string { return "vehicle_compatibilities" }
-
-func (v *VehicleCompatibility) BeforeCreate(tx *gorm.DB) error {
-	if v.ID == uuid.Nil {
-		v.ID = uuid.New()
-	}
-	return nil
-}
 
 type Tag struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`

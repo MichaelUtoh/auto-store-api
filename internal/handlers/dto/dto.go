@@ -258,20 +258,44 @@ type AddProductImagesRequest struct {
 	Images []ProductImageItem `json:"images" binding:"required,min=1,dive"`
 }
 
-// AddVehicleCompatibilitiesRequest is the body for adding vehicle compatibilities to a product.
-type AddVehicleCompatibilitiesRequest struct {
-	Compatibilities []VehicleCompatibilityItem `json:"compatibilities" binding:"required,min=1,dive"`
+// CreateVehicleCompatibilityRequest creates a standalone catalog entry.
+type CreateVehicleCompatibilityRequest struct {
+	Make          string `json:"make" binding:"required,max=100"`
+	Model         string `json:"model" binding:"required,max=100"`
+	Generation    string `json:"generation" binding:"max=100"`
+	YearStart     int    `json:"year_start"`
+	YearEnd       int    `json:"year_end"`
+	Engine        string `json:"engine" binding:"max=100"`
+	Trim          string `json:"trim" binding:"max=100"`
+	MarketVariant string `json:"market_variant" binding:"max=100"`
+	Notes         string `json:"notes" binding:"max=500"`
 }
 
-// VehicleCompatibilityItem is a single vehicle fit (make, model, year range, etc.).
+// AddVehicleCompatibilitiesRequest links compatibilities to a product.
+// Provide compatibility_ids to pick from catalog, and/or compatibilities to create new catalog entries.
+type AddVehicleCompatibilitiesRequest struct {
+	CompatibilityIDs []uuid.UUID                `json:"compatibility_ids"`
+	Compatibilities  []VehicleCompatibilityItem `json:"compatibilities"`
+}
+
+// LinkCompatibilityItem picks an existing catalog entry for a product.
+type LinkCompatibilityItem struct {
+	ID        uuid.UUID `json:"id" binding:"required"`
+	LinkNotes string    `json:"link_notes" binding:"max=500"`
+}
+
+// VehicleCompatibilityItem creates a new catalog entry and links it to the product.
 type VehicleCompatibilityItem struct {
-	Make      string `json:"make" binding:"required,max=100"`
-	Model     string `json:"model" binding:"required,max=100"`
-	YearStart int    `json:"year_start"` // 0 = unspecified
-	YearEnd   int    `json:"year_end"`   // 0 = unspecified
-	Engine    string `json:"engine" binding:"max=100"`
-	Trim      string `json:"trim" binding:"max=100"`
-	Notes     string `json:"notes" binding:"max=500"`
+	Make          string `json:"make" binding:"required,max=100"`
+	Model         string `json:"model" binding:"required,max=100"`
+	Generation    string `json:"generation" binding:"max=100"`
+	YearStart     int    `json:"year_start"`
+	YearEnd       int    `json:"year_end"`
+	Engine        string `json:"engine" binding:"max=100"`
+	Trim          string `json:"trim" binding:"max=100"`
+	MarketVariant string `json:"market_variant" binding:"max=100"`
+	Notes         string `json:"notes" binding:"max=500"`
+	LinkNotes     string `json:"link_notes" binding:"max=500"`
 }
 
 // ProductImageItem is a single image in an add-images request.

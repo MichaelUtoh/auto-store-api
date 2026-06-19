@@ -71,6 +71,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 		LockoutDuration: cfg.RateLimit.LockoutDuration,
 	}, log)
 	productSvc := services.NewProductService(productRepo, categoryRepo, compatRepo, db)
+	compatSvc := services.NewVehicleCompatibilityService(compatRepo)
 	categorySvc := services.NewCategoryService(categoryRepo, db)
 	cartSvc := services.NewCartService(cartRepo, productRepo, db)
 	emailSender := email.NewSender(cfg.Email)
@@ -90,6 +91,7 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 
 	authH := handlers.NewAuthHandler(authSvc)
 	productH := handlers.NewProductHandler(productSvc, inventorySvc)
+	compatH := handlers.NewVehicleCompatibilityHandler(compatSvc)
 	inventoryH := handlers.NewInventoryHandler(inventorySvc)
 	categoryH := handlers.NewCategoryHandler(categorySvc, productSvc)
 	cartH := handlers.NewCartHandler(cartSvc)
@@ -249,6 +251,9 @@ func Setup(cfg *config.Config, db *gorm.DB, log *zap.Logger) *gin.Engine {
 			adminProducts.POST("/products/:id/images", productH.AddImages)
 			adminProducts.DELETE("/products/:id/images/:imageId", productH.DeleteProductImage)
 			adminProducts.POST("/products/:id/compatibility", productH.AddCompatibilities)
+			adminProducts.GET("/vehicle-compatibilities", compatH.List)
+			adminProducts.POST("/vehicle-compatibilities", compatH.Create)
+			adminProducts.GET("/vehicle-compatibilities/:id", compatH.Get)
 			adminProducts.GET("/admin/inventory/low-stock", inventoryH.ListLowStock)
 			adminProducts.GET("/admin/inventory/products/:id/movements", inventoryH.ListMovements)
 			adminProducts.PATCH("/admin/inventory/products/:id/stock", inventoryH.AdjustStock)

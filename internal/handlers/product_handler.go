@@ -486,12 +486,12 @@ func (h *ProductHandler) GetCompatibility(c *gin.Context) {
 		utils.JSONBadRequest(c, "invalid product id")
 		return
 	}
-	product, err := h.product.GetByID(id)
+	compat, err := h.product.ListLinkedCompatibilities(id)
 	if err != nil {
 		utils.JSONNotFound(c, "product not found")
 		return
 	}
-	utils.JSON(c, http.StatusOK, product.Compatibilities)
+	utils.JSON(c, http.StatusOK, compat)
 }
 
 // AddCompatibilities godoc
@@ -501,8 +501,8 @@ func (h *ProductHandler) GetCompatibility(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Product ID"
-// @Param body body dto.AddVehicleCompatibilitiesRequest true "Compatibilities (make, model, year_start, year_end, engine, trim, notes)"
-// @Success 201 {array} models.VehicleCompatibility
+// @Param body body dto.AddVehicleCompatibilitiesRequest true "compatibility_ids and/or compatibilities to create"
+// @Success 201 {array} repositories.LinkedCompatibility
 // @Failure 400,404 {object} utils.APIResponse
 // @Router /api/v1/products/{id}/compatibility [post]
 func (h *ProductHandler) AddCompatibilities(c *gin.Context) {
@@ -516,24 +516,50 @@ func (h *ProductHandler) AddCompatibilities(c *gin.Context) {
 		utils.JSONBadRequest(c, err.Error())
 		return
 	}
-	inputs := make([]services.AddCompatibilitiesInput, len(req.Compatibilities))
-	for i := range req.Compatibilities {
-		inputs[i] = services.AddCompatibilitiesInput{
-			Make:      req.Compatibilities[i].Make,
-			Model:     req.Compatibilities[i].Model,
-			YearStart: req.Compatibilities[i].YearStart,
-			YearEnd:   req.Compatibilities[i].YearEnd,
-			Engine:    req.Compatibilities[i].Engine,
-			Trim:      req.Compatibilities[i].Trim,
-			Notes:     req.Compatibilities[i].Notes,
+	if len(req.CompatibilityIDs) == 0 && len(req.Compatibilities) == 0 {
+		utils.JSONBadRequest(c, "provide compatibility_ids and/or compatibilities")
+		return
+	}
+
+	if len(req.CompatibilityIDs) > 0 {
+		links := make([]services.LinkCompatibilitiesInput, len(req.CompatibilityIDs))
+		for i, cid := range req.CompatibilityIDs {
+			links[i] = services.LinkCompatibilitiesInput{CompatibilityID: cid}
+		}
+		if _, err := h.product.LinkCompatibilities(id, links); err != nil {
+			utils.JSONBadRequest(c, err.Error())
+			return
 		}
 	}
-	created, err := h.product.AddCompatibilities(id, inputs)
+
+	if len(req.Compatibilities) > 0 {
+		inputs := make([]services.AddCompatibilitiesInput, len(req.Compatibilities))
+		for i, item := range req.Compatibilities {
+			inputs[i] = services.AddCompatibilitiesInput{
+				Make:          item.Make,
+				Model:         item.Model,
+				Generation:    item.Generation,
+				YearStart:     item.YearStart,
+				YearEnd:       item.YearEnd,
+				Engine:        item.Engine,
+				Trim:          item.Trim,
+				MarketVariant: item.MarketVariant,
+				Notes:         item.Notes,
+				LinkNotes:     item.LinkNotes,
+			}
+		}
+		if _, err := h.product.AddCompatibilities(id, inputs); err != nil {
+			utils.JSONBadRequest(c, err.Error())
+			return
+		}
+	}
+
+	linked, err := h.product.ListLinkedCompatibilities(id)
 	if err != nil {
 		utils.JSONNotFound(c, "product not found")
 		return
 	}
-	utils.JSON(c, http.StatusCreated, created)
+	utils.JSON(c, http.StatusCreated, linked)
 }
 
 // AddImages godoc
